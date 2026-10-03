@@ -17,7 +17,6 @@ body:
         - Claude desktop or claude.ai
         - Cursor
         - ChatGPT
-        - Codex
         - Other
     validations:
       required: true

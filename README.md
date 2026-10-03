@@ -69,15 +69,6 @@ Turn on developer mode under **Settings** › **Apps** › **Advanced settings**
 
 Developer mode works on the web only. On Pro, ChatGPT can only read: tools that change something, such as sending a request or editing a form, need Business, Enterprise or Edu. On Business, only admins and owners can use developer mode. OpenAI's own guide: [Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
 
-### Codex
-
-```bash
-codex mcp add formbase --url https://api.formbase.so/api/mcp
-codex mcp login formbase
-```
-
-The second command opens the formbase sign-in page.
-
 ### Cursor
 
 Add this to [`.cursor/mcp.json`](.cursor/mcp.json) in your project, or to `~/.cursor/mcp.json` for every project:
