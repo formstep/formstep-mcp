@@ -290,7 +290,7 @@ For anyone who writes their own MCP client or debugs a connection.
 
 ## Report a problem
 
-- Email [support@formbase.so](mailto:support@formbase.so).
+- Email [support@formstep.io](mailto:support@formstep.io).
 - Or [open an issue](https://github.com/formstep/formstep-mcp/issues/new/choose) in this repository. Say which AI tool you use, how it signs in, the tool it called, and the error it got back.
 
 Issues are public. Never paste a token (`fb_...` or `fbo_...`) or a recipient's answers into one; email us instead. To report a security problem, see [SECURITY.md](SECURITY.md).

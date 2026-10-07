@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting this. Never paste an API token (`fb_...`), an OAuth token (`fbo_...`) or a recipient's answers here: issues are public. For anything private, or for a security problem, email support@formbase.so instead.
+        Thanks for reporting this. Never paste an API token (`fb_...`), an OAuth token (`fbo_...`) or a recipient's answers here: issues are public. For anything private, or for a security problem, email support@formstep.io instead.
   - type: dropdown
     id: client
     attributes:

@@ -2,7 +2,7 @@
 
 ## Report a vulnerability
 
-Email [support@formbase.so](mailto:support@formbase.so) with the subject "Security". Do not open a public issue.
+Email [support@formstep.io](mailto:support@formstep.io) with the subject "Security". Do not open a public issue.
 
 Include:
 
