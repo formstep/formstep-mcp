@@ -1,13 +1,13 @@
 {
-  "name": "formbase",
+  "name": "formstep",
   "version": "1.0.2",
   "description": "Collect verified customer information with one request.",
   "author": {
-    "name": "formbase",
-    "url": "https://formbase.so"
+    "name": "Formstep",
+    "url": "https://formstep.io"
   },
-  "homepage": "https://formbase.so",
-  "repository": "https://github.com/formbaseso/formbase-mcp",
+  "homepage": "https://formstep.io",
+  "repository": "https://github.com/formstep/formstep-mcp",
   "license": "MIT",
-  "keywords": ["formbase", "requests", "forms", "customer", "verification"]
+  "keywords": ["formstep", "requests", "forms", "customer", "verification"]
 }

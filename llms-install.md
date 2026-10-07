@@ -1,16 +1,16 @@
-# Installing the formbase MCP server
+# Installing the Formstep MCP server
 
-formbase is a hosted MCP server at `https://api.formbase.so/api/mcp`. There is nothing to clone, build or run locally.
+Formstep is a hosted MCP server at `https://api.formstep.io/api/mcp`. There is nothing to clone, build or run locally.
 
-1. Ask the user for a formbase API token. They create one in their formbase workspace: open **OAuth and API Keys** in the sidebar and click **Create token**. The token starts with `fb_`, reaches one workspace and expires 30 days after it is created. Docs: https://docs.formbase.so/developers/api-tokens/
+1. Ask the user for a Formstep API token. They create one in their Formstep workspace: open **OAuth and API Keys** in the sidebar and click **Create token**. The token starts with `fb_`, reaches one workspace and expires 30 days after it is created. Docs: https://docs.formstep.io/developers/api-tokens/
 2. Add this entry to `cline_mcp_settings.json`, with the user's token in place of `fb_YOUR_TOKEN`. Keep any servers that are already there.
 
    ```json
    {
      "mcpServers": {
-       "formbase": {
+       "formstep": {
          "type": "streamableHttp",
-         "url": "https://api.formbase.so/api/mcp",
+         "url": "https://api.formstep.io/api/mcp",
          "headers": {
            "Authorization": "Bearer fb_YOUR_TOKEN"
          }

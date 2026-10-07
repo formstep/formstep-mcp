@@ -1,15 +1,15 @@
-# formbase MCP server
+# Formstep MCP server
 
-<img src="logo.png" alt="formbase logo" width="96" align="right">
+<img src="logo.png" alt="Formstep logo" width="96" align="right">
 
-The hosted MCP server for [formbase](https://formbase.so). Collect verified customer information with one request.
+The hosted MCP server for [Formstep](https://formstep.io). Collect verified customer information with one request.
 
-Your agent sends a **request** to one customer, the **recipient**: a form in your brand and their language, prefilled with what you know, so they only confirm or correct it. They upload files, sign, book or pay on the same page, without an account. The answers come back under your **field keys**, with your external ID and, when the form has a decision question, an approve, decline or changes outcome. Your agent reads them with `request_get`, or formbase calls your callback URL the moment the recipient submits.
+Your agent sends a **request** to one customer, the **recipient**: a form in your brand and their language, prefilled with what you know, so they only confirm or correct it. They upload files, sign, book or pay on the same page, without an account. The answers come back under your **field keys**, with your external ID and, when the form has a decision question, an approve, decline or changes outcome. Your agent reads them with `request_get`, or Formstep calls your callback URL the moment the recipient submits.
 
 The server lives at:
 
 ```text
-https://api.formbase.so/api/mcp
+https://api.formstep.io/api/mcp
 ```
 
 This repository holds documentation, example configs and a Grok Build plugin manifest. There is nothing to install or run.
@@ -30,16 +30,16 @@ This repository holds documentation, example configs and a Grok Build plugin man
 - **Publish and share.** Publish a form, create share links, translate it, and set its theme and settings.
 - **Read results.** List a form's submissions and read its analytics.
 
-Most AI tools sign in to formbase with OAuth: you paste the URL, sign in to formbase in the browser, and pick a workspace. Scripts and headless agents send an API token instead.
+Most AI tools sign in to Formstep with OAuth: you paste the URL, sign in to Formstep in the browser, and pick a workspace. Scripts and headless agents send an API token instead.
 
 ## Connect your AI tool
 
-Leave any client ID, secret or token field empty. The AI tool finds the formbase sign-in page from the server and registers itself.
+Leave any client ID, secret or token field empty. The AI tool finds the Formstep sign-in page from the server and registers itself.
 
 ### Claude Code
 
 ```bash
-claude mcp add --transport http formbase https://api.formbase.so/api/mcp
+claude mcp add --transport http formstep https://api.formstep.io/api/mcp
 ```
 
 Then type `/mcp` in Claude Code to sign in.
@@ -49,9 +49,9 @@ To share the server with everyone who works on a project, commit a [`.mcp.json`]
 ```json
 {
   "mcpServers": {
-    "formbase": {
+    "formstep": {
       "type": "http",
-      "url": "https://api.formbase.so/api/mcp"
+      "url": "https://api.formstep.io/api/mcp"
     }
   }
 }
@@ -65,7 +65,7 @@ On Team and Enterprise, an owner adds the connector first under **Organization s
 
 ### ChatGPT
 
-Turn on developer mode under **Settings** › **Apps** › **Advanced settings**. Then open **Settings** › **Apps** › **Create**, paste the URL, choose OAuth, click **Scan Tools**, sign in to formbase, and click **Create**.
+Turn on developer mode under **Settings** › **Apps** › **Advanced settings**. Then open **Settings** › **Apps** › **Create**, paste the URL, choose OAuth, click **Scan Tools**, sign in to Formstep, and click **Create**.
 
 Developer mode works on the web only. On Pro, ChatGPT can only read: tools that change something, such as sending a request or editing a form, need Business, Enterprise or Edu. On Business, only admins and owners can use developer mode. OpenAI's own guide: [Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
 
@@ -76,8 +76,8 @@ Add this to [`.cursor/mcp.json`](.cursor/mcp.json) in your project, or to `~/.cu
 ```json
 {
   "mcpServers": {
-    "formbase": {
-      "url": "https://api.formbase.so/api/mcp"
+    "formstep": {
+      "url": "https://api.formstep.io/api/mcp"
     }
   }
 }
@@ -90,9 +90,9 @@ Cline connects with an API token (see [below](#scripts-and-headless-agents-use-a
 ```json
 {
   "mcpServers": {
-    "formbase": {
+    "formstep": {
       "type": "streamableHttp",
-      "url": "https://api.formbase.so/api/mcp",
+      "url": "https://api.formstep.io/api/mcp",
       "headers": {
         "Authorization": "Bearer fb_YOUR_TOKEN"
       }
@@ -105,31 +105,31 @@ Or ask Cline to install it: [`llms-install.md`](llms-install.md) has the steps i
 
 ### Grok Build
 
-This repository is also a Grok Build plugin: [`.grok-plugin/plugin.json`](.grok-plugin/plugin.json), the [`.mcp.json`](.mcp.json) server config and one skill, [`formbase-requests`](skills/formbase-requests/SKILL.md). The plugin runs nothing on your machine. It calls one network endpoint, `https://api.formbase.so/api/mcp`, and signs in with formbase OAuth, or with an API token you add as a header.
+This repository is also a Grok Build plugin: [`.grok-plugin/plugin.json`](.grok-plugin/plugin.json), the [`.mcp.json`](.mcp.json) server config and one skill, [`formstep-requests`](skills/formstep-requests/SKILL.md). The plugin runs nothing on your machine. It calls one network endpoint, `https://api.formstep.io/api/mcp`, and signs in with Formstep OAuth, or with an API token you add as a header.
 
 ### Other tools
 
-Any tool that supports remote MCP servers with sign-in works the same way: look for where it adds a server by URL. The [connect guide](https://docs.formbase.so/guides/ai-agents/connect/) links each tool's own instructions.
+Any tool that supports remote MCP servers with sign-in works the same way: look for where it adds a server by URL. The [connect guide](https://docs.formstep.io/guides/ai-agents/connect/) links each tool's own instructions.
 
 ### Sign in and pick a workspace
 
-The first time the agent uses formbase, your AI tool opens a formbase page in the browser. Sign in, pick the workspace, and click **Authorize**.
+The first time the agent uses Formstep, your AI tool opens a Formstep page in the browser. Sign in, pick the workspace, and click **Authorize**.
 
-A connection reaches that one workspace only. To use another workspace, add formbase a second time and pick the other one.
+A connection reaches that one workspace only. To use another workspace, add Formstep a second time and pick the other one.
 
 To check that it works, ask:
 
 ```text
-List my formbase forms and whether each one is published.
+List my Formstep forms and whether each one is published.
 ```
 
-To remove the connection, open **OAuth and API Keys** in the formbase workspace sidebar. Under **Connected apps**, click the trash icon next to the connection and confirm with **Disconnect**.
+To remove the connection, open **OAuth and API Keys** in the Formstep workspace sidebar. Under **Connected apps**, click the trash icon next to the connection and confirm with **Disconnect**.
 
 ### Scripts and headless agents: use an API token
 
 Anything that cannot open a browser, such as a script, a CI job or a headless agent, sends an API token as a header instead.
 
-1. Open **OAuth and API Keys** in your workspace sidebar and click **Create token** ([API tokens](https://docs.formbase.so/developers/api-tokens/)).
+1. Open **OAuth and API Keys** in your workspace sidebar and click **Create token** ([API tokens](https://docs.formstep.io/developers/api-tokens/)).
 2. Copy the token. It starts with `fb_`.
 3. Send it as an `Authorization: Bearer` header.
 
@@ -138,7 +138,7 @@ A token reaches exactly one workspace, like an OAuth connection. It expires 30 d
 Claude Code, from the command line:
 
 ```bash
-claude mcp add --transport http formbase https://api.formbase.so/api/mcp \
+claude mcp add --transport http formstep https://api.formstep.io/api/mcp \
   --header "Authorization: Bearer fb_YOUR_TOKEN"
 ```
 
@@ -147,9 +147,9 @@ Or in a config file. This is `.mcp.json` for Claude Code; Cursor takes the same 
 ```json
 {
   "mcpServers": {
-    "formbase": {
+    "formstep": {
       "type": "http",
-      "url": "https://api.formbase.so/api/mcp",
+      "url": "https://api.formstep.io/api/mcp",
       "headers": {
         "Authorization": "Bearer fb_YOUR_TOKEN"
       }
@@ -165,26 +165,26 @@ Other tools take the same URL and header. See their documentation for where.
 Send a request to one person. Use the name of one of your published forms:
 
 ```text
-Send a formbase request with the "Supplier onboarding" form to Ada Lovelace (ada@acme.example). Fill in the company name "Analytical Engines Ltd" and lock it so it cannot be changed. Use supplier-2041 as the external ID. Don't send the invitation email; give me the link and I will send it myself.
+Send a Formstep request with the "Supplier onboarding" form to Ada Lovelace (ada@acme.example). Fill in the company name "Analytical Engines Ltd" and lock it so it cannot be changed. Use supplier-2041 as the external ID. Don't send the invitation email; give me the link and I will send it myself.
 ```
 
 The agent reads the form's field keys with `fields_list`, creates the request with `request_create`, and gives you the request link.
 
-If the form has **Send reminders** on, formbase still emails the recipient its scheduled reminders. To prevent that, also say _no reminders_.
+If the form has **Send reminders** on, Formstep still emails the recipient its scheduled reminders. To prevent that, also say _no reminders_.
 
 The agent is not told when the recipient submits, so ask it later:
 
 ```text
-Has the formbase request supplier-2041 been answered? Show me the answers.
+Has the Formstep request supplier-2041 been answered? Show me the answers.
 ```
 
 The agent finds the request by its external ID with `request_list`, then reads it with `request_get`. Once the request is completed, the answers come back keyed by field key.
 
-Step by step: [Send a request with an AI agent](https://docs.formbase.so/guides/ai-agents/send-a-request/) and [Build a form with an AI agent](https://docs.formbase.so/guides/ai-agents/build-a-form/).
+Step by step: [Send a request with an AI agent](https://docs.formstep.io/guides/ai-agents/send-a-request/) and [Build a form with an AI agent](https://docs.formstep.io/guides/ai-agents/build-a-form/).
 
 ## Tools
 
-Every tool is on `tools/list` with its full input schema as soon as an AI tool connects. The [MCP server reference](https://docs.formbase.so/developers/mcp-server/) describes them in detail.
+Every tool is on `tools/list` with its full input schema as soon as an AI tool connects. The [MCP server reference](https://docs.formstep.io/developers/mcp-server/) describes them in detail.
 
 ### Requests
 
@@ -258,12 +258,12 @@ Two actions cannot be undone:
 
 ## Limits
 
-- **Rate limit.** 120 tool calls per minute per token, shared with the [REST API](https://docs.formbase.so/developers/rest-api/). Only `tools/call` counts. Over the limit, the call returns a failed tool result with `RATE_LIMITED` and a `retryAfterMs`. `request_create` and `document_create` also share a second limit of 60 calls per minute per token.
+- **Rate limit.** 120 tool calls per minute per token, shared with the [REST API](https://docs.formstep.io/developers/rest-api/). Only `tools/call` counts. Over the limit, the call returns a failed tool result with `RATE_LIMITED` and a `retryAfterMs`. `request_create` and `document_create` also share a second limit of 60 calls per minute per token.
 - **Monthly allowance.** Each `request_create` spends one unit of the monthly allowance of the workspace owner's plan, whether or not the recipient ever answers. A test request (`test: true`) spends nothing. When the allowance is spent, `request_create` fails with `MONTHLY_ALLOWANCE_REACHED`.
-- **Paid plans.** Emailing a recipient (the invitation and reminders) and `formAnalytics_get` need the Pro or Business plan. See [plans and pricing](https://docs.formbase.so/subscription-billing/plans-pricing/).
-- **No notification when a recipient submits.** The server never calls your agent. Ask again later, or pass a `callbackUrl` to `request_create` so formbase calls your endpoint ([callbacks](https://docs.formbase.so/requests/callbacks/)).
+- **Paid plans.** Emailing a recipient (the invitation and reminders) and `formAnalytics_get` need the Pro or Business plan. See [plans and pricing](https://docs.formstep.io/subscription-billing/plans-pricing/).
+- **No notification when a recipient submits.** The server never calls your agent. Ask again later, or pass a `callbackUrl` to `request_create` so Formstep calls your endpoint ([callbacks](https://docs.formstep.io/requests/callbacks/)).
 - **No file uploads through a tool call.** Images are set by URL: an `http(s)://` URL or a `data:image` URI. A document for a request is the exception: `document_create` returns an upload URL you `PUT` the file to within one hour. PDF and images only, 25 MB per file.
-- **No workspace AI skills.** Skills you write in formbase only work in formbase's built-in AI chat. The server's own guides (`load_skill`) work over MCP.
+- **No workspace AI skills.** Skills you write in Formstep only work in Formstep's built-in AI chat. The server's own guides (`load_skill`) work over MCP.
 
 ## Protocol details
 
@@ -271,27 +271,27 @@ For anyone who writes their own MCP client or debugs a connection.
 
 - **Transport.** Streamable HTTP, `POST` only. Every response is JSON. There is no event stream and no session ID, so each call stands alone. As the MCP spec requires, send `Content-Type: application/json` and `Accept: application/json, text/event-stream`.
 - **Protocol version.** `2025-11-25`.
-- **Sign-in.** Every call needs `Authorization: Bearer <token>`, `initialize` included. Without one, the server answers `401` with a `WWW-Authenticate` header that points to `https://api.formbase.so/.well-known/oauth-protected-resource`. From there a client finds the OAuth 2.1 server, which requires PKCE (S256) and supports dynamic client registration. The [reference](https://docs.formbase.so/developers/mcp-server/#oauth) lists each step.
+- **Sign-in.** Every call needs `Authorization: Bearer <token>`, `initialize` included. Without one, the server answers `401` with a `WWW-Authenticate` header that points to `https://api.formstep.io/.well-known/oauth-protected-resource`. From there a client finds the OAuth 2.1 server, which requires PKCE (S256) and supports dynamic client registration. The [reference](https://docs.formstep.io/developers/mcp-server/#oauth) lists each step.
 - **Tokens.** Both kinds reach one workspace and the same tools.
   - An API token starts with `fb_` and lasts 30 days from creation.
   - An OAuth access token starts with `fbo_` and lasts 1 hour. Your AI tool renews it with a refresh token, which lasts 30 days and is replaced on every use.
-- **Results.** A tool result is one text item that holds JSON. A failure has `success: false` and an `error` message. Request tools add a reason code such as `UNKNOWN_FIELD_KEY` under `details`, and a `suggestion` that says how to fix the call. [Troubleshooting requests](https://docs.formbase.so/requests/troubleshooting/) explains the common ones.
-- **Browsers.** The server allows cross-origin calls from formbase's own sites only, so a web page on another origin cannot call it directly.
+- **Results.** A tool result is one text item that holds JSON. A failure has `success: false` and an `error` message. Request tools add a reason code such as `UNKNOWN_FIELD_KEY` under `details`, and a `suggestion` that says how to fix the call. [Troubleshooting requests](https://docs.formstep.io/requests/troubleshooting/) explains the common ones.
+- **Browsers.** The server allows cross-origin calls from Formstep's own sites only, so a web page on another origin cannot call it directly.
 
 ## Docs
 
-- [MCP server reference](https://docs.formbase.so/developers/mcp-server/): every tool, OAuth for your own client, and limits
-- [Connect an AI agent](https://docs.formbase.so/guides/ai-agents/connect/)
-- [Build a form with an AI agent](https://docs.formbase.so/guides/ai-agents/build-a-form/)
-- [Send a request with an AI agent](https://docs.formbase.so/guides/ai-agents/send-a-request/)
-- [Requests overview](https://docs.formbase.so/requests/overview/), [field keys](https://docs.formbase.so/requests/field-keys/), and [callbacks](https://docs.formbase.so/requests/callbacks/)
-- [API tokens](https://docs.formbase.so/developers/api-tokens/) and the [REST API](https://docs.formbase.so/developers/rest-api/)
-- [Privacy policy](https://docs.formbase.so/legal/privacy-policy/) and [terms of service](https://docs.formbase.so/legal/terms-of-service/)
+- [MCP server reference](https://docs.formstep.io/developers/mcp-server/): every tool, OAuth for your own client, and limits
+- [Connect an AI agent](https://docs.formstep.io/guides/ai-agents/connect/)
+- [Build a form with an AI agent](https://docs.formstep.io/guides/ai-agents/build-a-form/)
+- [Send a request with an AI agent](https://docs.formstep.io/guides/ai-agents/send-a-request/)
+- [Requests overview](https://docs.formstep.io/requests/overview/), [field keys](https://docs.formstep.io/requests/field-keys/), and [callbacks](https://docs.formstep.io/requests/callbacks/)
+- [API tokens](https://docs.formstep.io/developers/api-tokens/) and the [REST API](https://docs.formstep.io/developers/rest-api/)
+- [Privacy policy](https://docs.formstep.io/legal/privacy-policy/) and [terms of service](https://docs.formstep.io/legal/terms-of-service/)
 
 ## Report a problem
 
 - Email [support@formbase.so](mailto:support@formbase.so).
-- Or [open an issue](https://github.com/formbaseso/formbase-mcp/issues/new/choose) in this repository. Say which AI tool you use, how it signs in, the tool it called, and the error it got back.
+- Or [open an issue](https://github.com/formstep/formstep-mcp/issues/new/choose) in this repository. Say which AI tool you use, how it signs in, the tool it called, and the error it got back.
 
 Issues are public. Never paste a token (`fb_...` or `fbo_...`) or a recipient's answers into one; email us instead. To report a security problem, see [SECURITY.md](SECURITY.md).
 
@@ -299,4 +299,4 @@ Fixes to these docs are welcome as pull requests.
 
 ## License
 
-The files in this repository are MIT licensed; see [LICENSE](LICENSE). Using the formbase service is covered by the [terms of service](https://docs.formbase.so/legal/terms-of-service/).
+The files in this repository are MIT licensed; see [LICENSE](LICENSE). Using the Formstep service is covered by the [terms of service](https://docs.formstep.io/legal/terms-of-service/).

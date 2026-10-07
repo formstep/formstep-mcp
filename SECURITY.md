@@ -14,4 +14,4 @@ Never include a real token (`fb_...` or `fbo_...`) or a recipient's answers. If 
 
 ## Scope
 
-This repository holds documentation and example configs only. The policy covers the hosted server at `https://api.formbase.so/api/mcp` and its OAuth sign-in.
+This repository holds documentation and example configs only. The policy covers the hosted server at `https://api.formstep.io/api/mcp` and its OAuth sign-in.

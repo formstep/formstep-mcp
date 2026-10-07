@@ -1,10 +1,10 @@
 {
   "identifier": "formbaseso-formbase-mcp",
-  "name": "formbase",
+  "name": "Formstep",
   "version": "1.0.2",
   "description": "Collect verified customer information with one request. The customer confirms or corrects a branded, prefilled form; answers come back under your field keys.",
-  "homepage": "https://formbase.so",
-  "cloudEndpoint": "https://api.formbase.so/api/mcp",
+  "homepage": "https://formstep.io",
+  "cloudEndpoint": "https://api.formstep.io/api/mcp",
   "tags": [
     "forms",
     "requests",
@@ -606,7 +606,7 @@
           },
           "showBranding": {
             "type": "boolean",
-            "description": "Show formbase branding on the form."
+            "description": "Show Formstep branding on the form."
           },
           "passwordEnabled": {
             "type": "boolean",
@@ -5096,7 +5096,7 @@
             "exclusiveMinimum": 0
           },
           "callbackUrl": {
-            "description": "Public https endpoint POSTed on completion, expiry and cancellation, signed with X-formbase-Signature. Private and loopback addresses are refused.",
+            "description": "Public https endpoint POSTed on completion, expiry and cancellation, signed with X-Formstep-Signature. Private and loopback addresses are refused.",
             "type": "string"
           },
           "idempotencyKey": {

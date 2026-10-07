@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.formbaseso/formbase-mcp",
-  "title": "formbase",
+  "title": "Formstep",
   "description": "Collect verified customer information with one request",
   "version": "1.0.2",
-  "websiteUrl": "https://formbase.so",
+  "websiteUrl": "https://formstep.io",
   "repository": {
-    "url": "https://github.com/formbaseso/formbase-mcp",
+    "url": "https://github.com/formstep/formstep-mcp",
     "source": "github"
   },
   "icons": [
     {
-      "src": "https://formbase.so/assets/logo-light.png",
+      "src": "https://formstep.io/assets/logo-light.png",
       "mimeType": "image/png",
       "sizes": ["256x256"]
     }
@@ -19,7 +19,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://api.formbase.so/api/mcp"
+      "url": "https://api.formstep.io/api/mcp"
     }
   ]
 }

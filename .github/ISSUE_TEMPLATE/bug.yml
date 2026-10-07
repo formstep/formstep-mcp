@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in the formbase MCP server does not work the way the docs say.
+description: Something in the Formstep MCP server does not work the way the docs say.
 title: '[Bug]: '
 labels: ['bug']
 body:
@@ -11,7 +11,7 @@ body:
     id: client
     attributes:
       label: AI tool
-      description: Which tool was connected to formbase?
+      description: Which tool was connected to Formstep?
       options:
         - Claude Code
         - Claude desktop or claude.ai
