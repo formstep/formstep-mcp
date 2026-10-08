@@ -1,5 +1,5 @@
 {
-  "identifier": "formbaseso-formbase-mcp",
+  "identifier": "formstep-formstep-mcp",
   "name": "Formstep",
   "version": "1.1.0",
   "description": "Collect verified customer information with one request. The customer confirms or corrects a branded, prefilled form; answers come back under your field keys.",
