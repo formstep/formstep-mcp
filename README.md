@@ -94,7 +94,7 @@ Cline connects with an API token (see [below](#scripts-and-headless-agents-use-a
       "type": "streamableHttp",
       "url": "https://api.formstep.io/api/mcp",
       "headers": {
-        "Authorization": "Bearer fb_YOUR_TOKEN"
+        "Authorization": "Bearer fs_YOUR_TOKEN"
       }
     }
   }
@@ -130,7 +130,7 @@ To remove the connection, open **OAuth and API Keys** in the Formstep workspace 
 Anything that cannot open a browser, such as a script, a CI job or a headless agent, sends an API token as a header instead.
 
 1. Open **OAuth and API Keys** in your workspace sidebar and click **Create token** ([API tokens](https://docs.formstep.io/developers/api-tokens/)).
-2. Copy the token. It starts with `fb_`.
+2. Copy the token. It starts with `fs_`.
 3. Send it as an `Authorization: Bearer` header.
 
 A token reaches exactly one workspace, like an OAuth connection. It expires 30 days after you create it and cannot be extended, so plan to replace it. Keep it out of git.
@@ -139,7 +139,7 @@ Claude Code, from the command line:
 
 ```bash
 claude mcp add --transport http formstep https://api.formstep.io/api/mcp \
-  --header "Authorization: Bearer fb_YOUR_TOKEN"
+  --header "Authorization: Bearer fs_YOUR_TOKEN"
 ```
 
 Or in a config file. This is `.mcp.json` for Claude Code; Cursor takes the same `headers` object in its `mcp.json`:
@@ -151,7 +151,7 @@ Or in a config file. This is `.mcp.json` for Claude Code; Cursor takes the same 
       "type": "http",
       "url": "https://api.formstep.io/api/mcp",
       "headers": {
-        "Authorization": "Bearer fb_YOUR_TOKEN"
+        "Authorization": "Bearer fs_YOUR_TOKEN"
       }
     }
   }
@@ -273,8 +273,8 @@ For anyone who writes their own MCP client or debugs a connection.
 - **Protocol version.** `2025-11-25`.
 - **Sign-in.** Every call needs `Authorization: Bearer <token>`, `initialize` included. Without one, the server answers `401` with a `WWW-Authenticate` header that points to `https://api.formstep.io/.well-known/oauth-protected-resource`. From there a client finds the OAuth 2.1 server, which requires PKCE (S256) and supports dynamic client registration. The [reference](https://docs.formstep.io/developers/mcp-server/#oauth) lists each step.
 - **Tokens.** Both kinds reach one workspace and the same tools.
-  - An API token starts with `fb_` and lasts 30 days from creation.
-  - An OAuth access token starts with `fbo_` and lasts 1 hour. Your AI tool renews it with a refresh token, which lasts 30 days and is replaced on every use.
+  - An API token starts with `fs_` and lasts 30 days from creation.
+  - An OAuth access token starts with `fso_` and lasts 1 hour. Your AI tool renews it with a refresh token, which lasts 30 days and is replaced on every use.
 - **Results.** A tool result is one text item that holds JSON. A failure has `success: false` and an `error` message. Request tools add a reason code such as `UNKNOWN_FIELD_KEY` under `details`, and a `suggestion` that says how to fix the call. [Troubleshooting requests](https://docs.formstep.io/requests/troubleshooting/) explains the common ones.
 - **Browsers.** The server allows cross-origin calls from Formstep's own sites only, so a web page on another origin cannot call it directly.
 
@@ -293,7 +293,7 @@ For anyone who writes their own MCP client or debugs a connection.
 - Email [support@formstep.io](mailto:support@formstep.io).
 - Or [open an issue](https://github.com/formstep/formstep-mcp/issues/new/choose) in this repository. Say which AI tool you use, how it signs in, the tool it called, and the error it got back.
 
-Issues are public. Never paste a token (`fb_...` or `fbo_...`) or a recipient's answers into one; email us instead. To report a security problem, see [SECURITY.md](SECURITY.md).
+Issues are public. Never paste a token (`fs_...` or `fso_...`) or a recipient's answers into one; email us instead. To report a security problem, see [SECURITY.md](SECURITY.md).
 
 Fixes to these docs are welcome as pull requests.
 

@@ -2,8 +2,8 @@
 
 Formstep is a hosted MCP server at `https://api.formstep.io/api/mcp`. There is nothing to clone, build or run locally.
 
-1. Ask the user for a Formstep API token. They create one in their Formstep workspace: open **OAuth and API Keys** in the sidebar and click **Create token**. The token starts with `fb_`, reaches one workspace and expires 30 days after it is created. Docs: https://docs.formstep.io/developers/api-tokens/
-2. Add this entry to `cline_mcp_settings.json`, with the user's token in place of `fb_YOUR_TOKEN`. Keep any servers that are already there.
+1. Ask the user for a Formstep API token. They create one in their Formstep workspace: open **OAuth and API Keys** in the sidebar and click **Create token**. The token starts with `fs_`, reaches one workspace and expires 30 days after it is created. Docs: https://docs.formstep.io/developers/api-tokens/
+2. Add this entry to `cline_mcp_settings.json`, with the user's token in place of `fs_YOUR_TOKEN`. Keep any servers that are already there.
 
    ```json
    {
@@ -12,7 +12,7 @@ Formstep is a hosted MCP server at `https://api.formstep.io/api/mcp`. There is n
          "type": "streamableHttp",
          "url": "https://api.formstep.io/api/mcp",
          "headers": {
-           "Authorization": "Bearer fb_YOUR_TOKEN"
+           "Authorization": "Bearer fs_YOUR_TOKEN"
          }
        }
      }

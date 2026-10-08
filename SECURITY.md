@@ -10,7 +10,7 @@ Include:
 - how to reproduce it
 - what an attacker could do with it
 
-Never include a real token (`fb_...` or `fbo_...`) or a recipient's answers. If a token leaked, delete it under **OAuth and API Keys** in your workspace sidebar first.
+Never include a real token (`fs_...` or `fso_...`) or a recipient's answers. If a token leaked, delete it under **OAuth and API Keys** in your workspace sidebar first.
 
 ## Scope
 
