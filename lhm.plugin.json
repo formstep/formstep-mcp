@@ -1,7 +1,7 @@
 {
   "identifier": "formbaseso-formbase-mcp",
   "name": "Formstep",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Collect verified customer information with one request. The customer confirms or corrects a branded, prefilled form; answers come back under your field keys.",
   "homepage": "https://formstep.io",
   "cloudEndpoint": "https://api.formstep.io/api/mcp",
@@ -348,7 +348,7 @@
     {
       "name": "formSubmission_list",
       "title": "List submissions",
-      "description": "List submissions for a form (paginated). Read-only. Call form_list for formId first. Each item carries `answers` keyed by field key — a choice is its option key, a matrix { row_key: column_key }, a repeating group [{ member_key: value }] — and `display`, the same keys as readable text. This is the shape request_get and every webhook or callback use; call fields_list for the keys' titles and option labels. translationLanguage optionally attaches a stored AI translation under item.translation.display (same keys); item.answers and item.display always stay the original. Returns { formId, formName, items, nextCursor, hasMore, canPaginate } — canPaginate is true only when another page is fetchable via nextCursor.",
+      "description": "List submissions for a form (paginated). Read-only. Call form_list for formId first. Each item carries `answers` keyed by field key — a choice is its option key, a matrix { row_key: column_key }, a repeating group [{ member_key: value }] — and `display`, the same keys as readable text. This is the shape request_get and every webhook or callback use; call fields_list for the keys' titles and option labels. translationLanguage optionally attaches a stored AI translation under item.translation.display (same keys); item.answers and item.display always stay the original. Drafts (isCompleted false) come back by default on Pro and Business; on Free only completed submissions are listed. Returns { formId, formName, items, nextCursor, hasMore, canPaginate } — canPaginate is true only when another page is fetchable via nextCursor.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -580,7 +580,7 @@
     {
       "name": "formSettings_update",
       "title": "Update form settings",
-      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument).\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formbase.so.\n\n{{variable}} placeholders for subjects/bodies:\n{{email.formName}} - Form name\n{{email.submittedAt}} - Submission date/time\n{{email.submissionId}} - Submission ID\n{{email.submissionType}} - \"New\", \"Updated\", or \"Partial\"\n{{metadata.formId}} - Form ID\n{{metadata.authorizedEmail}} - Respondent email (if auth enabled)\n{{metadata.pin4}} - 4-digit PIN per submission\n{{metadata.pin6}} - 6-digit PIN per submission\n{{metadata.code4}} - 4-char code per submission\n{{metadata.code6}} - 6-char code per submission\nPlus any answer by its field key: {{<key>}} (the key fields_list shows and requests, callbacks and submissions use; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}.",
+      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument).\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formstep.io.\n\n{{variable}} placeholders for subjects/bodies:\n{{email.formName}} - Form name\n{{email.submittedAt}} - Submission date/time\n{{email.submissionId}} - Submission ID\n{{email.submissionType}} - \"New\", \"Updated\", or \"Partial\"\n{{metadata.formId}} - Form ID\n{{metadata.authorizedEmail}} - Respondent email (if auth enabled)\n{{metadata.pin4}} - 4-digit PIN per submission\n{{metadata.pin6}} - 6-digit PIN per submission\n{{metadata.code4}} - 4-char code per submission\n{{metadata.code6}} - 6-char code per submission\nPlus any answer by its field key: {{<key>}} (the key fields_list shows and requests, callbacks and submissions use; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -639,7 +639,7 @@
           },
           "pdfGenerationEnabled": {
             "type": "boolean",
-            "description": "Attach submission PDF to self-notification emails."
+            "description": "Attach submission PDF to self-notification emails. Pro tier."
           },
           "showViewSubmissionButton": {
             "type": "boolean",
@@ -674,7 +674,7 @@
           },
           "respondentNotificationPdfEnabled": {
             "type": "boolean",
-            "description": "Attach submission PDF to respondent confirmation email."
+            "description": "Attach submission PDF to respondent confirmation email. Pro tier."
           },
           "respondentReminderEnabled": {
             "type": "boolean",
@@ -821,7 +821,7 @@
     {
       "name": "formTheme_set",
       "title": "Set form theme",
-      "description": "Set, patch, or reset a form's theme for one color mode. Light and dark themes are stored independently — call twice for full coverage. Use load_skill(\"form-themes\") for the preset catalog, full schema, and design guidelines.\n\nPrefer a built-in preset over hand-building hex — pass `preset` and skip `theme`:\n- `preset: \"<id>\"` → apply a named preset (e.g. \"dracula\"). The preset's mode must match `mode`; mismatches are rejected with the valid ids. See load_skill(\"form-themes\") for the catalog.\n\nOtherwise supply `theme` directly (omit `preset`):\n- `theme: null` → reset (`merge` ignored).\n- `theme: <partial>` + `merge: true` (default) → patch existing theme; omitted sections/fields preserved.\n- `theme: <full 7-section object>` + `merge: false` → replace entirely.\n\nPass exactly one of `preset` or `theme`. Sections: foundation (page bg/text/font/radius), input, choice (normal + selected), rating, button, question (title/desc/asterisk), feedback (error). Colors hex (#rrggbb).",
+      "description": "Set, patch, or reset a form's theme for one color mode. Light and dark themes are stored independently — call twice for full coverage. Use load_skill(\"form-themes\") for the preset catalog, full schema, and design guidelines.\n\nPrefer a built-in preset over hand-building hex — pass `preset` and skip `theme`. Presets work on every plan; a custom `theme` needs the Pro plan:\n- `preset: \"<id>\"` → apply a named preset (e.g. \"dracula\"). The preset's mode must match `mode`; mismatches are rejected with the valid ids. See load_skill(\"form-themes\") for the catalog.\n\nOtherwise supply `theme` directly (omit `preset`):\n- `theme: null` → reset (`merge` ignored).\n- `theme: <partial>` + `merge: true` (default) → patch existing theme; omitted sections/fields preserved.\n- `theme: <full 7-section object>` + `merge: false` → replace entirely.\n\nPass exactly one of `preset` or `theme`. Sections: foundation (page bg/text/font/radius), input, choice (normal + selected), rating, button, question (title/desc/asterisk), feedback (error). Colors hex (#rrggbb).",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5076,7 +5076,7 @@
             "additionalProperties": {}
           },
           "delivery": {
-            "description": "\"none\" (default) returns the link for you to deliver; \"email\" sends the invitation (needs recipient.email, Pro+).",
+            "description": "\"none\" (default) returns the link for you to deliver; \"email\" sends the invitation (needs recipient.email; Pro+, or one of Free's 10 free invitations).",
             "type": "string",
             "enum": [
               "none",
