@@ -3,7 +3,7 @@
   "name": "io.github.formstep/formstep-mcp",
   "title": "Formstep",
   "description": "Collect verified customer information with one request",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "websiteUrl": "https://formstep.io",
   "repository": {
     "url": "https://github.com/formstep/formstep-mcp",

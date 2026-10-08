@@ -224,8 +224,8 @@ Each block type has its own insert tool with a precise schema:
 ### Sharing and results
 
 - `formShareLink_list`, `formShareLink_create`, `formShareLink_update`: manage share links, also on a custom domain.
-- `formSubmission_list`: list a form's submissions, partial and completed.
-- `formAnalytics_get`: views, submissions, completion rate, and breakdowns by device, country, browser and source.
+- `formSubmission_list`: list a form's completed submissions, and drafts on request.
+- `formAnalytics_get`: views, submissions, completion rate, and unique visitors by device, country, browser and source.
 
 ### Appearance, settings and translations
 

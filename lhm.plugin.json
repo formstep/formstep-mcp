@@ -1,7 +1,7 @@
 {
   "identifier": "formstep-formstep-mcp",
   "name": "Formstep",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Collect verified customer information with one request. The customer confirms or corrects a branded, prefilled form; answers come back under your field keys.",
   "homepage": "https://formstep.io",
   "cloudEndpoint": "https://api.formstep.io/api/mcp",
@@ -348,7 +348,7 @@
     {
       "name": "formSubmission_list",
       "title": "List submissions",
-      "description": "List submissions for a form (paginated). Read-only. Call form_list for formId first. Each item carries `answers` keyed by field key — a choice is its option key, a matrix { row_key: column_key }, a repeating group [{ member_key: value }] — and `display`, the same keys as readable text. This is the shape request_get and every webhook or callback use; call fields_list for the keys' titles and option labels. translationLanguage optionally attaches a stored AI translation under item.translation.display (same keys); item.answers and item.display always stay the original. Drafts (isCompleted false) come back by default on Pro and Business; on Free only completed submissions are listed. Returns { formId, formName, items, nextCursor, hasMore, canPaginate } — canPaginate is true only when another page is fetchable via nextCursor.",
+      "description": "List submissions for a form (paginated). Read-only. Call form_list for formId first. Each item carries `answers` keyed by field key — a choice is its option key, a matrix { row_key: column_key }, a repeating group [{ member_key: value }] — and `display`, the same keys as readable text. This is the shape request_get and every webhook or callback use; call fields_list for the keys' titles and option labels. translationLanguage optionally attaches a stored AI translation under item.translation.display (same keys); item.answers and item.display always stay the original. Only completed submissions come back by default. includeDrafts: true adds drafts (started, never sent, isCompleted false) on Pro and Business. Count completed submissions as items with isCompleted true; never report a draft as completed. Returns { formId, formName, items, nextCursor, hasMore, canPaginate } — canPaginate is true only when another page is fetchable via nextCursor.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -386,7 +386,7 @@
     {
       "name": "formAnalytics_get",
       "title": "Get form analytics",
-      "description": "Get form analytics: views, submissions, completion rate, bounce rate, and device / browser / country / traffic-source breakdowns. Read-only. Use form_list to find formId first. Rate metrics (completionRate, engagementRate, bounceRate) return as numbers (0–100); counts are integers. Returns { formId, period, metrics, breakdown, totalEvents }. `totalEvents` is the raw analytics event row count (before deduplication into unique visitors). When `from`/`to` both omitted, response returns `period: { from: null, to: null }` (all time). Constraint: `from <= to` when both supplied. Analytics are a Pro feature: if the workspace owner is not on Pro, this returns UPGRADE_REQUIRED rather than data, including for history recorded while they were.",
+      "description": "Get form analytics: views, submissions, completion rate, bounce rate, and device / browser / country / traffic-source breakdowns. Read-only. Use form_list to find formId first. Rate metrics (completionRate, engagementRate, bounceRate) return as numbers (0–100); counts are integers. Each breakdown counts unique visitors per value (a visitor counts once, like uniqueVisitors); for completion on one device, filter by device and read completionRate. Returns { formId, period, metrics, breakdown, totalEvents }. `totalEvents` is the raw analytics event row count (before deduplication into unique visitors). When `from`/`to` both omitted, response returns `period: { from: null, to: null }` (all time). Constraint: `from <= to` when both supplied. Analytics are a Pro feature: if the workspace owner is not on Pro, this returns UPGRADE_REQUIRED rather than data, including for history recorded while they were.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4935,7 +4935,7 @@
                       "minLength": 1
                     }
                   ],
-                  "description": "The translation as a Slate fragment (Descendant[]). Pass it as a NATIVE JSON array — e.g. [{\"text\":\"Bonjour\"}], or with marks/links like [{\"text\":\"more \"},{\"type\":\"link\",\"url\":\"https://x.com\",\"children\":[{\"text\":\"here\"}]}] — so you never hand-escape nested JSON (escaping a stringified fragment is the #1 cause of failed link/underline translations). A JSON-stringified array string is also accepted for back-compat. Even plain text MUST be an array of leaves, never a bare prose string. Mirror the source fragment's structure + marks (bold/italic/underline/strikeThrough/links/variables); only translate the leaf text. For email body keys (`email.*.body`), preserve the paragraph/block roots from `sourceFragment`; do not write leaf-only `[{\"text\":\"...\"}]`."
+                  "description": "The translation as a rich-text fragment (Descendant[]). Pass it as a NATIVE JSON array — e.g. [{\"text\":\"Bonjour\"}], or with marks/links like [{\"text\":\"more \"},{\"type\":\"link\",\"url\":\"https://x.com\",\"children\":[{\"text\":\"here\"}]}] — so you never hand-escape nested JSON (escaping a stringified fragment is the #1 cause of failed link/underline translations). A JSON-stringified array string is also accepted for back-compat. Even plain text MUST be an array of leaves, never a bare prose string. Mirror the source fragment's structure + marks (bold/italic/underline/strikeThrough/links/variables); only translate the leaf text. For email body keys (`email.*.body`), preserve the paragraph/block roots from `sourceFragment`; do not write leaf-only `[{\"text\":\"...\"}]`."
                 },
                 "sourceHash": {
                   "description": "Echo the currentSourceHash returned by translationDraft_get for this key. Lets the server reject stale translations when the source changed.",
