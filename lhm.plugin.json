@@ -5076,7 +5076,7 @@
             "additionalProperties": {}
           },
           "delivery": {
-            "description": "\"none\" (default) returns the link for you to deliver; \"email\" sends the invitation (needs recipient.email; Pro+, or one of Free's 10 free invitations).",
+            "description": "\"none\" (default) returns the link for you to deliver; \"email\" sends the invitation (needs recipient.email; Pro+, or one of Free's 10 free invitations, which go only to your own address).",
             "type": "string",
             "enum": [
               "none",
