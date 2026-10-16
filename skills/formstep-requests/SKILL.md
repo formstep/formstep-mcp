@@ -21,7 +21,8 @@ Pass `form` instead of `formId` and `request_create` builds an ordinary form, pu
 {
   "form": {
     "name": "Documents for your application",
-    "baseline": "<form id to copy the logo, theme and emails from>",
+    "logo": { "type": "image", "url": "https://acme.example/logo.png" },
+    "cover": { "type": "color", "color": "#0f4c81" },
     "blocks": [
       { "type": "paragraph", "content": "Hi {{first_name}}, please upload your payslips." },
       { "type": "hiddenField", "key": "first_name" },
@@ -36,7 +37,8 @@ Pass `form` instead of `formId` and `request_create` builds an ordinary form, pu
 ```
 
 - Each block takes the parameters of its `editor_insert*` tool, without `formId` and `after`, plus `key`. Set `key` on every question; the answers come back under it.
-- Keep the definition the same for every recipient: the same `form` reuses the published form (`reused: true`). Personalise through `prefill` and `context` (`{{key}}` in text shows a value), never through the name or a block.
+- The brand goes in the definition: `logo` (`{ "type": "icon", "name": "HeartIcon" }` or `{ "type": "image", "url" }`), `cover` (`{ "type": "color", "color" }` or an image), `emoji`, `theme`. Use only image URLs the user gave you.
+- Keep the definition the same for every recipient, brand included: the same `form` reuses the published form (`reused: true`). Personalise through `prefill` and `context` (`{{key}}` in text shows a value), never through the name or a block.
 - Prefill a choice question with option keys derived from the labels: "Self-employed" becomes `self_employed`.
 - Before a `payment` or `scheduleAppointment` block, call `workspaceConnection_list`. If Stripe or Cal.com is missing, give the user its `connectUrl`; you cannot connect it yourself. `scheduler_listEventTypes` lists the event types a booking can name.
 - The response adds `form: { id, name, reused, fields }`. Pass `form.id` to `formSubmission_list` to read every answer to that form at once.

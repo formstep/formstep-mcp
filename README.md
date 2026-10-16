@@ -173,10 +173,10 @@ The agent reads the form's field keys with `fields_list`, creates the request wi
 No form yet? The agent can build one in the same call:
 
 ```text
-Ask Ada Lovelace (ada@acme.example) for her last three payslips and a 40 EUR processing fee, and let her book a 15 minute call. Use our "Supplier onboarding" form for the logo and colours. Give me the link.
+Ask Ada Lovelace (ada@acme.example) for her last three payslips and a 40 EUR processing fee, and let her book a 15 minute call. Use our logo at https://acme.example/logo.png and a dark blue cover. Give me the link.
 ```
 
-The agent checks the workspace's Stripe and Cal.com connections with `workspaceConnection_list`, then calls `request_create` with a `form` object instead of a `formId`: a name, the blocks, and a `baseline` form to copy the brand from. Formstep builds the form, publishes it and creates the request in one step, and returns the field keys the answers will come back under. The same definition again reuses that form, so a hundred requests make one form.
+The agent checks the workspace's Stripe and Cal.com connections with `workspaceConnection_list`, then calls `request_create` with a `form` object instead of a `formId`: a name, the blocks, and the logo and cover you gave it. Formstep builds the form, publishes it and creates the request in one step, and returns the field keys the answers will come back under. The same definition again reuses that form, so a hundred requests make one form.
 
 If the form has **Send reminders** on, Formstep still emails the recipient its scheduled reminders. To prevent that, also say _no reminders_.
 
@@ -218,7 +218,8 @@ Ask one named person for information and read the result.
 {
   "form": {
     "name": "Documents and fee for your mortgage application",
-    "baseline": "<id of a form to copy the brand from>",
+    "logo": { "type": "image", "url": "https://acme.example/logo.png" },
+    "cover": { "type": "color", "color": "#0f4c81" },
     "blocks": [
       { "type": "paragraph", "content": "Hi {{first_name}}, upload the documents and pay the fee." },
       { "type": "hiddenField", "key": "first_name" },
@@ -232,10 +233,10 @@ Ask one named person for information and read the result.
 }
 ```
 
-- **`form`** takes `name` and `blocks` (1 to 200, in form order), and optionally `baseline` (a form whose logo, cover, theme, language, emails and notification settings are copied), `language`, `theme` (a preset id per color mode) and `settings`.
+- **`form`** takes `name` and `blocks` (1 to 200, in form order), and optionally `language`, the brand (`logo`, `cover`, `emoji`), `theme` (a preset id per color mode), `settings` and `translations` (every string of the form per extra language). Formstep fetches each image URL once and keeps its own copy; it must be a public JPEG, PNG or WebP.
 - **Blocks** take the parameters of the matching `editor_insert*` tool, without `formId` and `after`, plus a `key`. Every block type is there: questions, documents, payment, scheduleAppointment, decision, content blocks, rows, page dividers, repeating groups, hidden and calculated fields, and logic rules that refer to other blocks by key.
 - **The response** adds `form: { id, name, reused, fields }`, the keys the answers come back under.
-- **One definition, one form.** The same `form` again reuses the published form (`reused: true`). Put the customer's name, invoice number or amount in `prefill` and `context`, never in the name or a block, or every call makes a new form. Set `key` on every question.
+- **One definition, one form.** The same `form` again reuses the published form (`reused: true`). Put the customer's name, invoice number or amount in `prefill` and `context`, never in the name, a block or the brand, or every call makes a new form. The agent keeps the brand and sends it unchanged with every request. Set `key` on every question.
 - **Payments and bookings** need Stripe or Cal.com connected to the workspace. `workspaceConnection_list` says what is connected and returns the `connectUrl` a person opens once; an agent cannot connect an account itself.
 
 The full reference is `load_skill("requests")`, section 2c, and [Create a form and a request in one call](https://docs.formstep.io/requests/inline-forms/).

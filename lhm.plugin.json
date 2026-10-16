@@ -20,22 +20,23 @@
         "type": "object",
         "properties": {
           "workspaceId": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "folderId": {
+            "description": "null for root-level only, omit for all.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "null for root-level only, omit for all."
+            ]
           },
           "query": {
+            "description": "Fuzzy name match. Omit to return all forms in scope.",
             "type": "string",
-            "description": "Fuzzy name match. Omit to return all forms in scope."
+            "minLength": 1
           },
           "limit": {
-            "type": "number",
-            "default": 20,
+            "type": "integer",
             "minimum": 1,
             "maximum": 100,
             "description": "Page size (1–100, default 20)."
@@ -119,10 +120,12 @@
         "type": "object",
         "properties": {
           "formId": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "name": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 255
           },
           "folderId": {
@@ -139,8 +142,8 @@
             "maxLength": 10
           },
           "cover": {
+            "description": "Set or remove the form cover. Discriminated by `type`: type=color requires color; type=image requires url; type=none takes no other fields. For type=image, never invent or guess a URL (no stock, placeholder, or Unsplash links) — use a URL the user provided or an uploaded image; if you have neither, ask the user instead.",
             "type": "object",
-            "description": "Set or remove the form cover. Discriminated by `type`. Per-variant fields validated server-side: type=color requires color; type=image requires url; type=none takes no other fields. For type=image, never invent or guess a URL (no stock, placeholder, or Unsplash links) — use a URL the user provided or an uploaded image; if you have neither, ask the user instead.",
             "properties": {
               "type": {
                 "type": "string",
@@ -151,21 +154,27 @@
                 ]
               },
               "color": {
+                "description": "Hex color (#rgb or #rrggbb) (type=color)",
                 "type": "string",
-                "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$",
-                "description": "Hex color (#rgb or #rrggbb) (type=color)"
+                "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
               },
               "url": {
                 "type": "string",
-                "description": "http(s) or data:image URI the user provided (type=image) — never invented"
+                "pattern": "^(https?:\\/\\/|data:image\\/)",
+                "description": "http(s) or data:image URI the user provided — never invented (type=image)"
               },
               "offsetY": {
+                "default": 50,
+                "description": "Vertical alignment 0–100 (type=image)",
                 "type": "number",
                 "minimum": 0,
-                "maximum": 100,
-                "description": "Vertical alignment 0–100 (type=image)"
+                "maximum": 100
               }
             },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false,
             "examples": [
               {
                 "type": "image",
@@ -179,15 +188,24 @@
               {
                 "type": "none"
               }
-            ],
-            "required": [
-              "type"
-            ],
-            "additionalProperties": false
+            ]
           },
           "logo": {
+            "description": "Set or remove the form logo. Discriminated by `type`: type=icon requires name; type=image requires url; type=none takes no other fields. For type=image, never invent or guess a URL — use a URL the user provided or an uploaded image; if you have neither, ask the user instead.",
+            "examples": [
+              {
+                "type": "icon",
+                "name": "QuestionMarkIcon"
+              },
+              {
+                "type": "image",
+                "url": "https://<uploaded-image-url>"
+              },
+              {
+                "type": "none"
+              }
+            ],
             "type": "object",
-            "description": "Set or remove the form logo. Discriminated by `type`. Per-variant fields validated server-side: type=icon requires name; type=image requires url; type=none takes no other fields. For type=image, never invent or guess a URL — use a URL the user provided or an uploaded image; if you have neither, ask the user instead.",
             "properties": {
               "type": {
                 "type": "string",
@@ -215,26 +233,14 @@
                   "LinkIcon",
                   "UsersIcon"
                 ],
-                "description": "Icon name (type=icon)"
+                "description": "(type=icon)"
               },
               "url": {
                 "type": "string",
-                "description": "http(s) or data:image URI the user provided (type=image) — never invented"
+                "pattern": "^(https?:\\/\\/|data:image\\/)",
+                "description": "http(s) or data:image URI the user provided — never invented (type=image)"
               }
             },
-            "examples": [
-              {
-                "type": "icon",
-                "name": "QuestionMarkIcon"
-              },
-              {
-                "type": "image",
-                "url": "https://<uploaded-image-url>"
-              },
-              {
-                "type": "none"
-              }
-            ],
             "required": [
               "type"
             ],
@@ -528,17 +534,13 @@
             ]
           },
           "customSlug": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 3,
-                "maxLength": 64,
-                "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]{3,}$"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]{3,}$"
           },
           "revoked": {
             "type": "boolean",
@@ -564,6 +566,7 @@
         "properties": {
           "formId": {
             "type": "string",
+            "minLength": 1,
             "description": "Form ID to get settings for"
           }
         },
@@ -580,170 +583,188 @@
     {
       "name": "formSettings_update",
       "title": "Update form settings",
-      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument). A fourth, the request invitation (requestInvitationSubject/Body), has no switch: request_create decides per request whether it is sent.\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formstep.io.\n\n{{variable}} placeholders for subjects/bodies:\n{{email.formName}} - Form name\n{{email.submittedAt}} - Submission date/time\n{{email.submissionId}} - Submission ID\n{{email.submissionType}} - \"New\", \"Updated\", or \"Partial\"\n{{metadata.formId}} - Form ID\n{{metadata.authorizedEmail}} - Respondent email (if auth enabled)\n{{metadata.pin4}} - 4-digit PIN per submission\n{{metadata.pin6}} - 6-digit PIN per submission\n{{metadata.code4}} - 4-char code per submission\n{{metadata.code6}} - 6-char code per submission\nPlus any answer by its field key: {{<key>}} (the key fields_list shows and requests, callbacks and submissions use; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}.",
+      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument). A fourth, the request invitation (requestInvitationSubject/Body), has no switch: request_create decides per request whether it is sent.\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formstep.io.\n\n{{variable}} placeholders for subjects/bodies: {{email.formName}}, {{email.submittedAt}}, {{email.submissionId}}, {{email.submissionType}}, {{metadata.formId}}, {{metadata.authorizedEmail}}, {{metadata.pin4|pin6|code4|code6}}, plus any answer as {{<key>}} (the field key fields_list shows; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}. load_skill(\"form-settings\") describes each.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "formId": {
             "type": "string",
+            "minLength": 1,
             "description": "Form ID to update settings for"
           },
           "language": {
-            "type": "string",
-            "description": "BCP-47 language tag (e.g. \"en\", \"en-US\", \"pt-BR\"). Defaults to \"en\"."
+            "description": "BCP-47 language tag (e.g. \"en\", \"en-US\", \"pt-BR\"). Defaults to \"en\".",
+            "type": "string"
           },
           "editAfterSubmit": {
-            "type": "boolean",
-            "description": "Allow respondents to edit a submission after sending."
+            "description": "Allow respondents to edit a submission after sending.",
+            "type": "boolean"
           },
           "maxEdits": {
-            "type": "number",
-            "description": "Max post-submit edits allowed per submission (requires editAfterSubmit). 0 = unlimited on Pro and Business, 3 on Free; max 3."
+            "description": "Max post-submit edits allowed per submission (requires editAfterSubmit). 0 = unlimited on Pro and Business, 3 on Free.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
           },
           "requireAuthentication": {
-            "type": "boolean",
-            "description": "Require respondents to be logged in."
+            "description": "Require respondents to be logged in.",
+            "type": "boolean"
           },
           "showBranding": {
-            "type": "boolean",
-            "description": "Show Formstep branding on the form."
+            "description": "Show Formstep branding on the form.",
+            "type": "boolean"
           },
           "passwordEnabled": {
-            "type": "boolean",
-            "description": "Gate form with a password. Auto-set to true when `password` is provided. Setting true requires a stored password."
+            "description": "Gate form with a password. Auto-set to true when `password` is provided. Setting true requires a stored password.",
+            "type": "boolean"
           },
           "password": {
+            "description": "Form access password. Setting a string implies passwordEnabled:true. Pass null to clear the gate (sets passwordEnabled:false).",
             "type": [
               "string",
               "null"
             ],
-            "minLength": 4,
-            "description": "Form access password (≥4 chars). Setting a string implies passwordEnabled:true. Pass null to clear the gate (sets passwordEnabled:false)."
+            "minLength": 4
           },
           "captchaEnabled": {
-            "type": "boolean",
-            "description": "Enable Turnstile bot protection."
+            "description": "Enable Turnstile bot protection.",
+            "type": "boolean"
           },
           "notifyOnSubmission": {
-            "type": "boolean",
-            "description": "Email form owner/team on new submissions."
+            "description": "Email form owner/team on new submissions.",
+            "type": "boolean"
           },
           "notificationEmails": {
-            "type": "array",
+            "description": "Email addresses receiving submission notifications. Duplicates are collapsed case-insensitively.",
+            "maxItems": 10,
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "string",
-              "format": "email"
-            },
-            "maxItems": 10,
-            "description": "Email addresses receiving submission notifications. At most 10; duplicates are collapsed case-insensitively."
+              "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+            }
           },
           "pdfGenerationEnabled": {
-            "type": "boolean",
-            "description": "Attach submission PDF to self-notification emails. Pro tier."
+            "description": "Attach submission PDF to self-notification emails. Pro tier.",
+            "type": "boolean"
           },
           "showViewSubmissionButton": {
-            "type": "boolean",
-            "description": "Show \"View Submission\" button in self-notification emails."
+            "description": "Show \"View Submission\" button in self-notification emails.",
+            "type": "boolean"
           },
           "selfNotificationSubject": {
-            "type": "string",
-            "description": "Custom subject for self-notification emails. Plain text with optional {{variable}} placeholders."
+            "description": "Custom subject for self-notification emails. Plain text with optional {{variable}} placeholders.",
+            "type": "string"
           },
           "selfNotificationEmailBody": {
-            "type": "string",
-            "description": "Custom body for self-notification emails. Plain text with optional {{variable}} placeholders; newlines become paragraphs."
+            "description": "Custom body for self-notification emails. Plain text with optional {{variable}} placeholders; newlines become paragraphs.",
+            "type": "string"
           },
           "respondentNotificationEnabled": {
-            "type": "boolean",
-            "description": "Enable confirmation email sent to the respondent after submission."
+            "description": "Enable confirmation email sent to the respondent after submission.",
+            "type": "boolean"
           },
           "respondentNotificationTo": {
+            "description": "Field ID of an email-type question. Respondent email is extracted from their answer to this field. Set to null to clear.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "Field ID of an email-type question. Respondent email is extracted from their answer to this field. Set to null to clear."
+            ]
           },
           "respondentNotificationSubject": {
-            "type": "string",
-            "description": "Custom subject for respondent confirmation email. Plain text with optional {{variable}} placeholders."
+            "description": "Custom subject for respondent confirmation email. Plain text with optional {{variable}} placeholders.",
+            "type": "string"
           },
           "respondentNotificationBody": {
-            "type": "string",
-            "description": "Custom body for respondent confirmation email. Plain text with optional {{variable}} placeholders; newlines become paragraphs."
+            "description": "Custom body for respondent confirmation email. Plain text with optional {{variable}} placeholders; newlines become paragraphs.",
+            "type": "string"
           },
           "respondentNotificationPdfEnabled": {
-            "type": "boolean",
-            "description": "Attach submission PDF to respondent confirmation email. Pro tier."
+            "description": "Attach submission PDF to respondent confirmation email. Pro tier.",
+            "type": "boolean"
           },
           "respondentReminderEnabled": {
-            "type": "boolean",
-            "description": "Enable reminder email to respondents who started but did not complete the form. Pro tier."
+            "description": "Enable reminder email to respondents who started but did not complete the form. Pro tier.",
+            "type": "boolean"
           },
           "respondentReminderTo": {
+            "description": "Field ID of an email-type question. Set to null to clear.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "Field ID of an email-type question. Set to null to clear."
+            ]
           },
           "respondentReminderSubject": {
-            "type": "string",
-            "description": "Custom subject for the reminder email. Plain text with optional {{variable}} placeholders."
+            "description": "Custom subject for the reminder email. Plain text with optional {{variable}} placeholders.",
+            "type": "string"
           },
           "respondentReminderBody": {
-            "type": "string",
-            "description": "Custom body for the reminder email. Plain text with optional {{variable}} placeholders; newlines become paragraphs."
+            "description": "Custom body for the reminder email. Plain text with optional {{variable}} placeholders; newlines become paragraphs.",
+            "type": "string"
           },
           "requestInvitationSubject": {
-            "type": "string",
-            "description": "Custom subject for the request invitation email (request_create delivery \"email\"). Plain text with optional {{variable}} placeholders; context and prefill keys resolve, submission metadata does not. Pro tier."
+            "description": "Subject of the request invitation email (request_create delivery \"email\"). Plain text with {{variable}} placeholders; context and prefill keys resolve, submission metadata does not. Pro tier.",
+            "type": "string"
           },
           "requestInvitationBody": {
-            "type": "string",
-            "description": "Custom body for the request invitation email. Same placeholders as the subject; newlines become paragraphs. Pro tier."
+            "description": "Custom body for the request invitation email. Same placeholders as the subject; newlines become paragraphs. Pro tier.",
+            "type": "string"
           },
           "respondentReminderIdleWindow": {
+            "description": "Single-step form of `reminderSteps`, kept for older forms. Ignored when `reminderSteps` is set.",
             "type": "string",
             "enum": [
               "12h",
               "1d",
               "3d",
               "1w"
-            ],
-            "description": "Single-step form of `reminderSteps`, kept for forms authored before multi-step schedules. Ignored when `reminderSteps` is set."
+            ]
           },
           "reminderSteps": {
-            "type": "array",
+            "description": "Idle offsets from the respondent's last activity, e.g. [\"1d\",\"3d\",\"1w\"]. Max 5, sorted and deduped on save; [] = none. Applies to abandoned public-link responses and requests.",
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
-              "type": "string"
-            },
-            "description": "Reminder schedule as idle offsets from the respondent's last activity, e.g. [\"1d\",\"3d\",\"1w\"]. Max 5 steps, sorted and deduped on save; [] = no automatic reminders. Applies to both abandoned public-link responses and requests."
+              "type": "string",
+              "minLength": 1
+            }
           },
           "respondentReminderRequiredFieldIds": {
-            "type": "array",
             "description": "Minimum fields a respondent must have answered for the reminder to fire. Each item is a field ID from editor_getDocument. Empty array = remind any partial response.",
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             }
           },
           "emailDomainId": {
+            "description": "Verified email domain ID for custom From address. Read availableEmailDomains from formSettings_get for valid IDs. null resets to default.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "Verified email domain ID for custom From address. Read availableEmailDomains from formSettings_get for valid IDs. null resets to default."
+            ]
           },
           "redirectUrl": {
+            "description": "http(s) URL respondents land on after submission. null or empty string clears. Mutually exclusive with allowAnotherResponse:true.",
             "type": [
               "string",
               "null"
             ],
-            "description": "http(s) URL respondents land on after submission. null or empty string clears. Mutually exclusive with allowAnotherResponse:true."
+            "pattern": "^(https?:\\/\\/.+)?$"
           },
           "redirectQueryParams": {
-            "type": "array",
             "description": "Map form field values as query parameters on the redirect URL. Each entry maps a URL param name to a field ID.",
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "object",
               "properties": {
@@ -763,26 +784,32 @@
             }
           },
           "allowAnotherResponse": {
-            "type": "boolean",
-            "description": "After submitting, loop respondents back to a fresh empty form. Mutually exclusive with a non-empty redirectUrl."
+            "description": "After submitting, loop respondents back to a fresh empty form. Mutually exclusive with a non-empty redirectUrl.",
+            "type": "boolean"
           },
           "maxSubmissionsPerRespondent": {
-            "type": "number",
-            "description": "Max submissions one respondent may make via \"Submit another response\" (requires allowAnotherResponse). 0 = unlimited; max 1000. Hard-enforced for signed-in respondents; client-gated for anonymous."
+            "description": "Max submissions per respondent via \"Submit another response\" (requires allowAnotherResponse). 0 = unlimited. Enforced for signed-in respondents, client-gated for anonymous.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
           },
           "draftRetentionDays": {
+            "description": "Days to keep abandoned drafts. null reverts to runtime default.",
             "type": [
-              "number",
+              "integer",
               "null"
             ],
-            "description": "Days to keep abandoned drafts (0–36500). null reverts to runtime default."
+            "minimum": 0,
+            "maximum": 36500
           },
           "submissionRetentionDays": {
+            "description": "Days to keep submissions. null = runtime default. Also clears a fixed deletion date set in the builder (the two modes are exclusive). Business plan.",
             "type": [
-              "number",
+              "integer",
               "null"
             ],
-            "description": "Days to keep submissions (0–36500). null reverts to runtime default. Setting a value also clears any fixed deletion date configured in the form builder (the two retention modes are mutually exclusive). Business plan."
+            "minimum": 0,
+            "maximum": 36500
           }
         },
         "required": [
@@ -804,6 +831,7 @@
         "properties": {
           "formId": {
             "type": "string",
+            "minLength": 1,
             "description": "The form ID"
           },
           "mode": {
@@ -835,6 +863,7 @@
         "properties": {
           "formId": {
             "type": "string",
+            "minLength": 1,
             "description": "The form ID"
           },
           "mode": {
@@ -845,16 +874,12 @@
             ],
             "description": "Color-mode theme to operate on. Light and dark themes are stored independently."
           },
-          "preset": {
-            "type": "string",
-            "description": "Built-in preset id for this mode (e.g. \"dracula\"). Mutually exclusive with `theme`."
-          },
           "theme": {
+            "description": "Full theme object (for replace) OR partial (for patch). Pass `null` to reset to default. Sizes are pixels. Use load_skill(\"form-themes\") for design guidelines.",
             "type": [
               "object",
               "null"
             ],
-            "description": "Full theme object (for replace) OR partial (for patch). Pass `null` to reset to default. Sizes are pixels. Use load_skill(\"form-themes\") for design guidelines.",
             "properties": {
               "foundation": {
                 "type": "object",
@@ -896,12 +921,12 @@
                     ]
                   },
                   "fontSize": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 12,
                     "maximum": 22
                   },
                   "radius": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 32
                   }
@@ -927,12 +952,12 @@
                     "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
                   },
                   "borderWidth": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 8
                   },
                   "radius": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 32
                   }
@@ -954,12 +979,12 @@
                     "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
                   },
                   "borderWidth": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 8
                   },
                   "radius": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 32
                   },
@@ -989,7 +1014,7 @@
                     "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
                   },
                   "size": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 12,
                     "maximum": 48
                   }
@@ -1007,7 +1032,7 @@
                     "pattern": "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$"
                   },
                   "radius": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "maximum": 32
                   }
@@ -1041,9 +1066,13 @@
               }
             }
           },
+          "preset": {
+            "description": "Built-in preset id for this mode (e.g. \"dracula\"). Mutually exclusive with `theme`.",
+            "type": "string"
+          },
           "merge": {
-            "type": "boolean",
-            "description": "When true (default), `theme` is treated as a patch over the existing theme. When false, `theme` replaces entirely and must contain all 7 sections. Ignored when `theme` is null (reset) or when `preset` is used."
+            "description": "When true (default), `theme` is treated as a patch over the existing theme. When false, `theme` replaces entirely and must contain all 7 sections. Ignored when `theme` is null (reset) or when `preset` is used.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1097,9 +1126,6 @@
           },
           "headers": {
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
             "additionalProperties": {
               "type": "string"
             },
@@ -1140,9 +1166,6 @@
           },
           "headers": {
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
             "additionalProperties": {
               "type": "string"
             },
@@ -1438,12 +1461,12 @@
             "type": "string"
           },
           "version": {
+            "default": "draft",
             "type": "string",
             "enum": [
               "draft",
               "published"
-            ],
-            "default": "draft"
+            ]
           }
         },
         "required": [
@@ -1633,37 +1656,25 @@
                 "type": "object",
                 "properties": {
                   "minLength": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
                   },
                   "maxLength": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
                   },
                   "pattern": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
                   },
                   "requireVerification": {
                     "type": [
@@ -1684,81 +1695,53 @@
                     ]
                   },
                   "step": {
-                    "anyOf": [
-                      {
-                        "type": "number",
-                        "exclusiveMinimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "exclusiveMinimum": 0
                   },
                   "minDate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
                   "maxDate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
                   "minTime": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
                   },
                   "maxTime": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
                   },
                   "minSelections": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
                   },
                   "maxSelections": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
                   },
                   "requireAllRows": {
                     "type": [
@@ -1767,62 +1750,42 @@
                     ]
                   },
                   "minAnsweredRows": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
                   },
                   "minFiles": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 100
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100
                   },
                   "maxFiles": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 100
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100
                   },
                   "maxSize": {
-                    "anyOf": [
-                      {
-                        "type": "number",
-                        "exclusiveMinimum": 0,
-                        "maximum": 1073741824
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "exclusiveMinimum": 0,
+                    "maximum": 1073741824
                   },
                   "accept": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^(\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)(,\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)*$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^(\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)(,\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)*$"
                   }
                 },
                 "description": "Answer rules of a question (target it or its input); keys follow the input. text/url: minLength, maxLength, pattern. email: pattern, requireVerification (Business). number, rating, scale: min, max; number also step. date: minDate, maxDate YYYY-MM-DD. time: minTime, maxTime HH:mm. checkbox, multi picture: minSelections, maxSelections. matrix: requireAllRows, minAnsweredRows. file: minFiles, maxFiles, maxSize bytes, accept. null clears a rule."
@@ -1832,7 +1795,7 @@
                 "type": "boolean"
               },
               "multiple": {
-                "description": "Allow several answers — select, picture choice (picture choice drops its preselection).",
+                "description": "Allow several answers — picture choice only (drops its preselection). A select takes one answer.",
                 "type": "boolean"
               }
             }
@@ -2103,7 +2066,7 @@
                 "minItems": 1,
                 "type": "array",
                 "items": {
-                  "anyOf": [
+                  "oneOf": [
                     {
                       "type": "object",
                       "properties": {
@@ -2117,7 +2080,7 @@
                         "targets": {
                           "type": "array",
                           "items": {
-                            "anyOf": [
+                            "oneOf": [
                               {
                                 "type": "object",
                                 "properties": {
@@ -2207,22 +2170,10 @@
                       "properties": {
                         "type": {
                           "type": "string",
-                          "const": "preventNextPageNavigation"
-                        },
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "const": "preventFormSubmit"
+                          "enum": [
+                            "preventNextPageNavigation",
+                            "preventFormSubmit"
+                          ]
                         },
                         "message": {
                           "type": "string"
@@ -2244,62 +2195,83 @@
                           "description": "Target field id to mutate. Pass the nodeId of a calculated-field element (hidden-field targets are rejected)."
                         },
                         "operation": {
-                          "type": "object",
-                          "properties": {
-                            "op": {
-                              "type": "string",
-                              "enum": [
-                                "add",
-                                "subtract",
-                                "multiply",
-                                "divide",
-                                "set",
-                                "reset",
-                                "assign",
-                                "concatenate",
-                                "prepend"
-                              ],
-                              "description": "Number fields: add/subtract/multiply/divide/set/reset (use set, never assign, for the first step of a numeric chain). Text fields: assign/concatenate/prepend/reset. Divide by literal 0 is rejected; empty, non-numeric, or zero fieldRef divisors are runtime no-ops."
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "op": {
+                                  "type": "string",
+                                  "const": "reset"
+                                }
+                              },
+                              "required": [
+                                "op"
+                              ]
                             },
-                            "value": {
-                              "description": "Omit for reset.",
-                              "anyOf": [
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "kind": {
-                                      "type": "string",
-                                      "const": "literal"
-                                    },
-                                    "value": {}
-                                  },
-                                  "required": [
-                                    "kind",
-                                    "value"
+                            {
+                              "type": "object",
+                              "properties": {
+                                "op": {
+                                  "type": "string",
+                                  "enum": [
+                                    "add",
+                                    "subtract",
+                                    "multiply",
+                                    "divide",
+                                    "set",
+                                    "assign",
+                                    "concatenate",
+                                    "prepend"
                                   ]
                                 },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "kind": {
-                                      "type": "string",
-                                      "const": "fieldRef"
+                                "value": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "literal"
+                                        },
+                                        "value": {
+                                          "type": [
+                                            "number",
+                                            "string",
+                                            "boolean"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
                                     },
-                                    "fieldId": {
-                                      "type": "string"
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "fieldRef"
+                                        },
+                                        "fieldId": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fieldId"
+                                      ]
                                     }
-                                  },
-                                  "required": [
-                                    "kind",
-                                    "fieldId"
                                   ]
                                 }
+                              },
+                              "required": [
+                                "op",
+                                "value"
                               ]
                             }
-                          },
-                          "required": [
-                            "op"
-                          ]
+                          ],
+                          "description": "Number fields: add/subtract/multiply/divide/set/reset (use set, never assign, for the first step of a numeric chain). Text fields: assign/concatenate/prepend/reset. Divide: literal 0 is rejected; a 0, empty or non-numeric fieldRef skips the step."
                         }
                       },
                       "required": [
@@ -2329,7 +2301,7 @@
                           ]
                         },
                         "value": {
-                          "anyOf": [
+                          "oneOf": [
                             {
                               "type": "object",
                               "properties": {
@@ -2337,7 +2309,13 @@
                                   "type": "string",
                                   "const": "literal"
                                 },
-                                "value": {}
+                                "value": {
+                                  "type": [
+                                    "number",
+                                    "string",
+                                    "boolean"
+                                  ]
+                                }
                               },
                               "required": [
                                 "kind",
@@ -2404,9 +2382,9 @@
             "type": "string"
           },
           "answers": {
-            "type": "object",
             "description": "Map of fieldId → answer value (any JSON-serializable shape). Keys are question/input/hidden/calculated field IDs from editor_getDocument. Values follow the per-field type — strings for text, numbers for number, booleans for switch, arrays for checkbox/ranking, etc. For a payment input, true simulates a completed payment.",
-            "additionalProperties": true
+            "type": "object",
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -2989,12 +2967,11 @@
             "description": "Form ID to insert into"
           },
           "title": {
-            "description": "Default: \"Do you approve?\"",
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Question title in the form language, e.g. \"Do you approve?\""
           },
           "labels": {
-            "description": "Option labels in the form language",
             "type": "object",
             "properties": {
               "approve": {
@@ -3009,7 +2986,13 @@
                 "type": "string",
                 "minLength": 1
               }
-            }
+            },
+            "required": [
+              "approve",
+              "decline",
+              "changes"
+            ],
+            "description": "Option labels in the form language, e.g. { approve: \"Approve\", decline: \"Decline\", changes: \"Request changes\" }"
           },
           "required": {
             "description": "Default: true",
@@ -3045,7 +3028,9 @@
           }
         },
         "required": [
-          "formId"
+          "formId",
+          "title",
+          "labels"
         ]
       },
       "annotations": {
@@ -3147,7 +3132,7 @@
     {
       "name": "editor_insertSelectQuestion",
       "title": "Insert select question",
-      "description": "Insert a dropdown select question. Requires 2+ options. Use for single or multi-choice from a list.",
+      "description": "Insert a dropdown select question: one answer from a list. Requires 2+ options. For several answers use editor_insertCheckboxQuestion.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -3178,10 +3163,6 @@
           },
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
-            "type": "boolean"
-          },
-          "multiple": {
-            "description": "Allow multiple selections",
             "type": "boolean"
           },
           "randomizeOptions": {
@@ -3240,10 +3221,6 @@
             "type": "string",
             "minLength": 1,
             "description": "Question title"
-          },
-          "label": {
-            "description": "Switch label text",
-            "type": "string"
           },
           "required": {
             "description": "Whether question is required. Default: true. Pass false to make the field optional.",
@@ -3875,7 +3852,7 @@
             "description": "Question title"
           },
           "availabilityWindowDays": {
-            "description": "How many future days respondents may book. Default: 30.",
+            "description": "How many future days respondents may book. Default: 14.",
             "type": "integer",
             "minimum": 1,
             "maximum": 365
@@ -4047,7 +4024,7 @@
           },
           "content": {
             "type": "string",
-            "description": "Header text. Raw characters, not HTML entities. Markup: **bold**, *italic*, [text](https://url)."
+            "description": "Header text. Raw characters, not HTML entities. Markup: **bold**, *italic*, ~~struck~~, `code`, <u>underlined</u>, [text](https://url), <span color|background=\"red\" font=\"font-georgia\" size=\"1.25\">…</span>."
           },
           "level": {
             "default": 1,
@@ -4109,7 +4086,7 @@
           },
           "content": {
             "type": "string",
-            "description": "Paragraph text. Raw characters, not HTML entities. Markup: **bold**, *italic*, [text](https://url)."
+            "description": "Paragraph text. Raw characters, not HTML entities. Markup: **bold**, *italic*, ~~struck~~, `code`, <u>underlined</u>, [text](https://url), <span color|background=\"red\" font=\"font-georgia\" size=\"1.25\">…</span>."
           },
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
@@ -4323,7 +4300,7 @@
             "type": "boolean"
           },
           "cells": {
-            "description": "Cell text, rows x cols, row 0 first. Omit for an empty grid.",
+            "description": "Cell text, rows x cols, row 0 first, same markup as a paragraph. Omit for an empty grid.",
             "type": "array",
             "items": {
               "type": "array",
@@ -4394,7 +4371,7 @@
             "items": {
               "type": "string"
             },
-            "description": "List items"
+            "description": "List items. Same markup as a paragraph."
           },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
@@ -4846,7 +4823,7 @@
                 "minItems": 1,
                 "type": "array",
                 "items": {
-                  "anyOf": [
+                  "oneOf": [
                     {
                       "type": "object",
                       "properties": {
@@ -4860,7 +4837,7 @@
                         "targets": {
                           "type": "array",
                           "items": {
-                            "anyOf": [
+                            "oneOf": [
                               {
                                 "type": "object",
                                 "properties": {
@@ -4950,22 +4927,10 @@
                       "properties": {
                         "type": {
                           "type": "string",
-                          "const": "preventNextPageNavigation"
-                        },
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "const": "preventFormSubmit"
+                          "enum": [
+                            "preventNextPageNavigation",
+                            "preventFormSubmit"
+                          ]
                         },
                         "message": {
                           "type": "string"
@@ -4987,62 +4952,83 @@
                           "description": "Target field id to mutate. Pass the nodeId of a calculated-field element (hidden-field targets are rejected)."
                         },
                         "operation": {
-                          "type": "object",
-                          "properties": {
-                            "op": {
-                              "type": "string",
-                              "enum": [
-                                "add",
-                                "subtract",
-                                "multiply",
-                                "divide",
-                                "set",
-                                "reset",
-                                "assign",
-                                "concatenate",
-                                "prepend"
-                              ],
-                              "description": "Number fields: add/subtract/multiply/divide/set/reset (use set, never assign, for the first step of a numeric chain). Text fields: assign/concatenate/prepend/reset. Divide by literal 0 is rejected; empty, non-numeric, or zero fieldRef divisors are runtime no-ops."
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "op": {
+                                  "type": "string",
+                                  "const": "reset"
+                                }
+                              },
+                              "required": [
+                                "op"
+                              ]
                             },
-                            "value": {
-                              "description": "Omit for reset.",
-                              "anyOf": [
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "kind": {
-                                      "type": "string",
-                                      "const": "literal"
-                                    },
-                                    "value": {}
-                                  },
-                                  "required": [
-                                    "kind",
-                                    "value"
+                            {
+                              "type": "object",
+                              "properties": {
+                                "op": {
+                                  "type": "string",
+                                  "enum": [
+                                    "add",
+                                    "subtract",
+                                    "multiply",
+                                    "divide",
+                                    "set",
+                                    "assign",
+                                    "concatenate",
+                                    "prepend"
                                   ]
                                 },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "kind": {
-                                      "type": "string",
-                                      "const": "fieldRef"
+                                "value": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "literal"
+                                        },
+                                        "value": {
+                                          "type": [
+                                            "number",
+                                            "string",
+                                            "boolean"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
                                     },
-                                    "fieldId": {
-                                      "type": "string"
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "fieldRef"
+                                        },
+                                        "fieldId": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fieldId"
+                                      ]
                                     }
-                                  },
-                                  "required": [
-                                    "kind",
-                                    "fieldId"
                                   ]
                                 }
+                              },
+                              "required": [
+                                "op",
+                                "value"
                               ]
                             }
-                          },
-                          "required": [
-                            "op"
-                          ]
+                          ],
+                          "description": "Number fields: add/subtract/multiply/divide/set/reset (use set, never assign, for the first step of a numeric chain). Text fields: assign/concatenate/prepend/reset. Divide: literal 0 is rejected; a 0, empty or non-numeric fieldRef skips the step."
                         }
                       },
                       "required": [
@@ -5072,7 +5058,7 @@
                           ]
                         },
                         "value": {
-                          "anyOf": [
+                          "oneOf": [
                             {
                               "type": "object",
                               "properties": {
@@ -5080,7 +5066,13 @@
                                   "type": "string",
                                   "const": "literal"
                                 },
-                                "value": {}
+                                "value": {
+                                  "type": [
+                                    "number",
+                                    "string",
+                                    "boolean"
+                                  ]
+                                }
                               },
                               "required": [
                                 "kind",
@@ -5603,23 +5595,29 @@
                 "description": "1-200 blocks in form order: { type, key?, ...its editor_insert* tool's params }; load_skill(\"requests\") lists types."
               },
               "language": {
-                "description": "UI language tag. Default: the baseline's, else \"en\".",
+                "description": "UI language tag. Default: \"en\".",
                 "type": "string"
               },
-              "baseline": {
-                "description": "Form id to copy logo, cover, theme, settings and emails from.",
+              "logo": {
+                "description": "{ type: \"icon\", name } (load_skill(\"requests\") lists names) or { type: \"image\", url }."
+              },
+              "cover": {
+                "description": "{ type: \"color\", color: \"#rrggbb\" } or { type: \"image\", url, offsetY? }."
+              },
+              "emoji": {
+                "description": "One emoji, shown beside the name.",
                 "type": "string"
               },
               "settings": {
                 "description": "formSettings_update's settings, fields by key; see load_skill(\"requests\").",
                 "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
                 "additionalProperties": {}
               },
               "theme": {
-                "description": "{ light?, dark? }: preset id or whole formTheme_set theme per mode; wins over the baseline's."
+                "description": "{ light?, dark? }: preset id or whole formTheme_set theme per mode."
+              },
+              "translations": {
+                "description": "{ \"<language>\": { \"<text as written>\": \"<translated>\" } }, every string of the form; see load_skill(\"requests\")."
               }
             },
             "required": [
@@ -5652,17 +5650,11 @@
           "context": {
             "description": "Values for HIDDEN fields, keyed by field key: { \"crm_id\": \"A-42\" }. Only hidden-field keys (fields_list context: true); use metadata for others. Recipient cannot edit them, but sees mentioned ones.",
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
             "additionalProperties": {}
           },
           "prefill": {
             "description": "Starting answers for visible questions, keyed by field key. Shapes: string, number, \"2026-03-01\", \"09:30\", option KEY not label (see fields_list options), string[] of option keys (checkbox/ranking/picture-choice), { \"row_key\": \"column_key\" } (matrix), [{ \"member_key\": value }] (repeating group).",
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
             "additionalProperties": {}
           },
           "readonly": {
@@ -5679,9 +5671,6 @@
           "metadata": {
             "description": "Opaque JSON echoed on request_get and in the callback.",
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
             "additionalProperties": {}
           },
           "delivery": {
