@@ -1,7 +1,7 @@
 {
   "identifier": "formstep-formstep-mcp",
   "name": "Formstep",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Collect verified customer information with one request. The customer confirms or corrects a branded, prefilled form; answers come back under your field keys.",
   "homepage": "https://formstep.io",
   "cloudEndpoint": "https://api.formstep.io/api/mcp",
@@ -15,7 +15,7 @@
     {
       "name": "form_list",
       "title": "List forms",
-      "description": "List forms in a workspace with optional folder filter and fuzzy name query. folderId=null for root-level only, omit for all. Pass `query` to filter by name (fuzzy) — search results are capped at `limit` with a truthful `hasMore` flag, but cannot be paginated further (tighten the query if hasMore is true). Cursor pagination available on the unfiltered list path.",
+      "description": "List forms in a workspace with optional folder filter and fuzzy name query. folderId=null for root-level only, omit for all. Pass `query` to filter by name (fuzzy) — search results are capped at `limit` with a truthful `hasMore` flag, but cannot be paginated further (tighten the query if hasMore is true). Cursor pagination available on the unfiltered list path. Forms request_create built carry origin: \"inline\".",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -580,7 +580,7 @@
     {
       "name": "formSettings_update",
       "title": "Update form settings",
-      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument).\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formstep.io.\n\n{{variable}} placeholders for subjects/bodies:\n{{email.formName}} - Form name\n{{email.submittedAt}} - Submission date/time\n{{email.submissionId}} - Submission ID\n{{email.submissionType}} - \"New\", \"Updated\", or \"Partial\"\n{{metadata.formId}} - Form ID\n{{metadata.authorizedEmail}} - Respondent email (if auth enabled)\n{{metadata.pin4}} - 4-digit PIN per submission\n{{metadata.pin6}} - 6-digit PIN per submission\n{{metadata.code4}} - 4-char code per submission\n{{metadata.code6}} - 6-char code per submission\nPlus any answer by its field key: {{<key>}} (the key fields_list shows and requests, callbacks and submissions use; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}.",
+      "description": "Update form settings. Only provide fields to change. Use this for form BEHAVIOR — email notifications, scheduling/limits, redirects. For the form's name/folder/cover/logo use form_update; for colors/fonts/visual theme use formTheme_set; for questions and content use the editor_* tools.\n\nThree independent email flows: self-notification (form owner/team on submit), respondent notification (confirmation to respondent), respondent reminder (when respondent abandons mid-form, Pro tier). Each is gated by its own *Enabled flag and accepts a custom subject + body. Respondent-targeted flows require *To to point at an email-input field ID (find via editor_getDocument). A fourth, the request invitation (requestInvitationSubject/Body), has no switch: request_create decides per request whether it is sent.\n\nLocalization: customizing a respondent confirmation/reminder subject or body makes it translatable — the keys appear in translationDraft_get immediately (no form publish needed); localize via translationDraft_get → translationDraft_update. Self-notification (owner) emails are NOT translatable; write them directly in the target language here.\n\nCustom From domain: pass `emailDomainId` from formSettings_get → availableEmailDomains; null resets to noreply@formstep.io.\n\n{{variable}} placeholders for subjects/bodies:\n{{email.formName}} - Form name\n{{email.submittedAt}} - Submission date/time\n{{email.submissionId}} - Submission ID\n{{email.submissionType}} - \"New\", \"Updated\", or \"Partial\"\n{{metadata.formId}} - Form ID\n{{metadata.authorizedEmail}} - Respondent email (if auth enabled)\n{{metadata.pin4}} - 4-digit PIN per submission\n{{metadata.pin6}} - 6-digit PIN per submission\n{{metadata.code4}} - 4-char code per submission\n{{metadata.code6}} - 6-char code per submission\nPlus any answer by its field key: {{<key>}} (the key fields_list shows and requests, callbacks and submissions use; the input node id from form_get questions[].id also works). Keys read back as {{<key>}}.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -694,6 +694,14 @@
           "respondentReminderBody": {
             "type": "string",
             "description": "Custom body for the reminder email. Plain text with optional {{variable}} placeholders; newlines become paragraphs."
+          },
+          "requestInvitationSubject": {
+            "type": "string",
+            "description": "Custom subject for the request invitation email (request_create delivery \"email\"). Plain text with optional {{variable}} placeholders; context and prefill keys resolve, submission metadata does not. Pro tier."
+          },
+          "requestInvitationBody": {
+            "type": "string",
+            "description": "Custom body for the request invitation email. Same placeholders as the subject; newlines become paragraphs. Pro tier."
           },
           "respondentReminderIdleWindow": {
             "type": "string",
@@ -1050,6 +1058,162 @@
       }
     },
     {
+      "name": "formWebhook_list",
+      "title": "List webhooks",
+      "description": "List the webhook integrations of a form: url, signingSecret, headers, status and delivery counts. Read-only. A form has at most one; create it with formWebhook_create. Returns { items, nextCursor, hasMore, canPaginate }.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "formId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "formId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "formWebhook_create",
+      "title": "Create webhook",
+      "description": "Create the webhook integration of a form: every submission is POSTed to `url` as JSON, answers keyed by field key (fields_list), signed with the returned `signingSecret` (HMAC-SHA256 in X-Formstep-Signature). Public https only; one webhook per form (use formWebhook_update to change it). Returns the webhook including signingSecret. Verify delivery with formWebhook_test.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "formId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Public https endpoint that receives one POST per submission."
+          },
+          "headers": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Extra request headers, e.g. { \"Authorization\": \"Bearer …\" }. Replaces the stored set; {} clears it."
+          },
+          "includeSchema": {
+            "type": "boolean",
+            "description": "Also send the form schema (field keys, types, labels) in every event."
+          }
+        },
+        "required": [
+          "formId",
+          "url"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "formWebhook_update",
+      "title": "Update webhook",
+      "description": "Update a form webhook (provide at least one field): url, headers, includeSchema, or enabled to pause/resume delivery. The signing secret never changes; delete and create again to rotate it. Returns the updated webhook.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "webhookId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Webhook ID from formWebhook_list or formWebhook_create."
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Public https endpoint that receives one POST per submission."
+          },
+          "headers": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Extra request headers, e.g. { \"Authorization\": \"Bearer …\" }. Replaces the stored set; {} clears it."
+          },
+          "includeSchema": {
+            "type": "boolean",
+            "description": "Also send the form schema (field keys, types, labels) in every event."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "false pauses delivery (events are skipped, not queued); true resumes."
+          }
+        },
+        "required": [
+          "webhookId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "formWebhook_delete",
+      "title": "Delete webhook",
+      "description": "Delete a form webhook and its event log. Permanent: future submissions are no longer sent to its url and the signing secret is gone. To stop delivery temporarily use formWebhook_update({ enabled: false }).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "webhookId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Webhook ID from formWebhook_list or formWebhook_create."
+          }
+        },
+        "required": [
+          "webhookId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "formWebhook_test",
+      "title": "Test webhook",
+      "description": "Send an example submission event to a form webhook, signed and with its headers, and record the attempt in its event log. Nothing is stored as a submission. Returns { delivered, errorCategory?, errorMessage? }.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "webhookId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Webhook ID from formWebhook_list or formWebhook_create."
+          }
+        },
+        "required": [
+          "webhookId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "workspace_list",
       "title": "List workspaces",
       "description": "List workspaces the user can access (owned or member). Read-only. Next: workspaceFolder_list / form_list to drill into a workspace. Returns { items: [{id, name, createdAt, role}], nextCursor, hasMore }.",
@@ -1185,6 +1349,85 @@
       }
     },
     {
+      "name": "workspaceConnection_list",
+      "title": "List connections",
+      "description": "List the Stripe and Cal.com accounts the workspace has connected. Read before request_create with a payment or booking block. Returns { connectUrl, items: [{ provider, id, name, status, ready, default? }] }. Missing or not ready: tell your user to open connectUrl once.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "From workspace_list."
+          }
+        },
+        "required": [
+          "workspaceId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "scheduler_listEventTypes",
+      "title": "List Cal.com event types",
+      "description": "List the Cal.com event types a booking block can name. Returns { connection: { id, name }, items: [{ id, title, durationMinutes?, bookable, reasons? }] }. Only bookable ones work in a form.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "From workspace_list."
+          },
+          "connection": {
+            "description": "Cal.com connection id; needed when the workspace has several.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspaceId"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "paymentConnection_setDefault",
+      "title": "Set payment connection default",
+      "description": "Make one of the workspace's Stripe connections the default every payment charges through unless it names another. Workspace owner only. Returns { connection }.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "From workspace_list."
+          },
+          "connection": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stripe connection id from workspaceConnection_list."
+          }
+        },
+        "required": [
+          "workspaceId",
+          "connection"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "editor_getDocument",
       "title": "Get document",
       "description": "Read the form document as a TOON-serialized tree. Returns content + an `idRoles` map labelling every node id with its logic role (condition source, show/hide target, option, etc.) — consult before authoring logic. Use before any editor_insert*/update/replace/delete to discover nodeIds. Read-only. See load_skill(\"toon-format\") for the schema.",
@@ -1314,7 +1557,7 @@
     {
       "name": "editor_updateElement",
       "title": "Update element",
-      "description": "Edit one element identified by nodeId — replace its text, change its props, and/or reposition it in a single call. Call editor_getDocument first and copy nodeId from it — never guess or reuse an ID from an earlier conversation. `content`: replace the entire text of a paragraph/header/list-item/table-cell, etc. (whole-element replace, not a substring or document-wide replace; not valid on input/option shells). `properties` (partial — send only what changes): isHidden, isThankYouPage (page only — marks the post-submit thank-you page), required, titleIsHidden, label (renames an option, question-title, or question), maxStars (rating-input), min/max/minLabel/maxLabel (linear-scale-input), placeholder / defaultValue (text, email, phone, url, number — defaultValue null clears). `moveTo`: reposition instead of recreating — e.g. `moveTo:{parentId:<columnId>,position:\"last\"}` to move it into a column for a side-by-side layout, or `moveTo:{after:<nodeId>}` to place it right after another element. To set conditional logic rules on a logic element, use editor_setLogic instead.",
+      "description": "Edit one element identified by nodeId — replace its text, change its props, and/or reposition it in a single call. Call editor_getDocument first and copy nodeId from it — never guess or reuse an ID from an earlier conversation. `content`: replace the entire text of a paragraph/header/list-item/table-cell, etc. (whole-element replace, not a substring or document-wide replace; not valid on input/option shells). `properties` (partial — send only what changes): isHidden, isThankYouPage (page only — marks the post-submit thank-you page), required, titleIsHidden, label (renames an option, question-title, or question), maxStars (rating-input), min/max/minLabel/maxLabel (linear-scale-input), placeholder / defaultValue (text, email, phone, url, number — defaultValue null clears), validation (answer rules keyed by the input, e.g. `{maxLength:80}` or `{minDate:\"2026-01-01\"}`; null clears one), randomizeOptions (radio/checkbox/select/ranking), multiple (select/picture choice). `moveTo`: reposition instead of recreating — e.g. `moveTo:{parentId:<columnId>,position:\"last\"}` to move it into a column for a side-by-side layout, or `moveTo:{after:<nodeId>}` to place it right after another element. To set conditional logic rules on a logic element, use editor_setLogic instead.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1385,6 +1628,212 @@
                   "number",
                   "null"
                 ]
+              },
+              "validation": {
+                "type": "object",
+                "properties": {
+                  "minLength": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxLength": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pattern": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requireVerification": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "min": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "max": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "step": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minTime": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxTime": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minSelections": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxSelections": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requireAllRows": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "minAnsweredRows": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minFiles": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxFiles": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxSize": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "maximum": 1073741824
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "accept": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^(\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)(,\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)*$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "description": "Answer rules of a question (target it or its input); keys follow the input. text/url: minLength, maxLength, pattern. email: pattern, requireVerification (Business). number, rating, scale: min, max; number also step. date: minDate, maxDate YYYY-MM-DD. time: minTime, maxTime HH:mm. checkbox, multi picture: minSelections, maxSelections. matrix: requireAllRows, minAnsweredRows. file: minFiles, maxFiles, maxSize bytes, accept. null clears a rule."
+              },
+              "randomizeOptions": {
+                "description": "Shuffle options per respondent — radio, checkbox, select, ranking.",
+                "type": "boolean"
+              },
+              "multiple": {
+                "description": "Allow several answers — select, picture choice (picture choice drops its preselection).",
+                "type": "boolean"
               }
             }
           },
@@ -2043,6 +2492,11 @@
             "type": "integer",
             "minimum": 0
           },
+          "pattern": {
+            "description": "Regex the answer must match; anchor with ^ $.",
+            "type": "string",
+            "minLength": 1
+          },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
             "type": "string"
@@ -2146,6 +2600,20 @@
               "fieldName",
               "source"
             ]
+          },
+          "pattern": {
+            "description": "Regex the email or url must match",
+            "type": "string",
+            "minLength": 1
+          },
+          "requireVerification": {
+            "description": "Email only: respondent confirms the address by emailed code (Business plan)",
+            "type": "boolean"
+          },
+          "defaultCountry": {
+            "description": "Phone only: preselected country, ISO 3166-1 alpha-2",
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
           },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
@@ -2316,6 +2784,16 @@
             "description": "Start hidden (the target of a `show` rule).",
             "type": "boolean"
           },
+          "minDate": {
+            "description": "Earliest date, YYYY-MM-DD",
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "maxDate": {
+            "description": "Latest date, YYYY-MM-DD",
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
             "type": "string"
@@ -2375,6 +2853,16 @@
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
             "type": "boolean"
+          },
+          "minTime": {
+            "description": "Earliest time, HH:mm",
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+          },
+          "maxTime": {
+            "description": "Latest time, HH:mm",
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
           },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
@@ -2443,6 +2931,14 @@
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
             "type": "boolean"
+          },
+          "randomizeOptions": {
+            "description": "Shuffle option order per respondent",
+            "type": "boolean"
+          },
+          "defaultOption": {
+            "description": "Label of the option preselected",
+            "type": "string"
           },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
@@ -2590,6 +3086,27 @@
             "description": "Start hidden (the target of a `show` rule).",
             "type": "boolean"
           },
+          "randomizeOptions": {
+            "description": "Shuffle option order per respondent",
+            "type": "boolean"
+          },
+          "defaultOptions": {
+            "description": "Labels of the options checked by default",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minSelections": {
+            "description": "Fewest options to pick",
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxSelections": {
+            "description": "Most options to pick",
+            "type": "integer",
+            "minimum": 0
+          },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
             "type": "string"
@@ -2665,6 +3182,10 @@
           },
           "multiple": {
             "description": "Allow multiple selections",
+            "type": "boolean"
+          },
+          "randomizeOptions": {
+            "description": "Shuffle option order per respondent",
             "type": "boolean"
           },
           "after": {
@@ -2854,6 +3375,12 @@
             "description": "Accepted file types, comma-separated. Extensions \".pdf,.jpg\" or MIME types \"image/*\".",
             "type": "string",
             "pattern": "^(\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)(,\\s*(\\.[A-Za-z0-9]+|[A-Za-z0-9*]+\\/[A-Za-z0-9.+*-]+)\\s*)*$"
+          },
+          "minFiles": {
+            "description": "Fewest files to upload",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
           },
           "maxFiles": {
             "description": "Maximum number of files",
@@ -3141,6 +3668,15 @@
             "description": "Start hidden (the target of a `show` rule).",
             "type": "boolean"
           },
+          "requireAllRows": {
+            "description": "Every row needs an answer",
+            "type": "boolean"
+          },
+          "minAnsweredRows": {
+            "description": "Fewest rows to answer",
+            "type": "integer",
+            "minimum": 0
+          },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
             "type": "string"
@@ -3209,6 +3745,10 @@
           },
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
+            "type": "boolean"
+          },
+          "randomizeOptions": {
+            "description": "Shuffle starting order per respondent",
             "type": "boolean"
           },
           "after": {
@@ -3440,6 +3980,23 @@
             "description": "Allow multiple selections",
             "type": "boolean"
           },
+          "defaultOptions": {
+            "description": "Labels preselected; one at most unless multiple",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minSelections": {
+            "description": "Fewest pictures to pick (multiple only)",
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxSelections": {
+            "description": "Most pictures to pick (multiple only)",
+            "type": "integer",
+            "minimum": 0
+          },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
             "type": "string"
@@ -3490,8 +4047,7 @@
           },
           "content": {
             "type": "string",
-            "minLength": 1,
-            "description": "Header text (plain text — pass raw characters like \"&\" and \"<\", not HTML entities like \"&amp;\")"
+            "description": "Header text. Raw characters, not HTML entities. Markup: **bold**, *italic*, [text](https://url)."
           },
           "level": {
             "default": 1,
@@ -3553,7 +4109,7 @@
           },
           "content": {
             "type": "string",
-            "description": "Paragraph text (plain text — pass raw characters like \"&\" and \"<\", not HTML entities like \"&amp;\")"
+            "description": "Paragraph text. Raw characters, not HTML entities. Markup: **bold**, *italic*, [text](https://url)."
           },
           "isHidden": {
             "description": "Start hidden (the target of a `show` rule).",
@@ -3742,7 +4298,7 @@
     {
       "name": "editor_insertTable",
       "title": "Insert table",
-      "description": "Insert a static content table (text cells the form author fills in) — NOT a question; for rating grids respondents answer, use editor_insertMatrixQuestion. `rows` and `cols` are numbers, never strings. Example: {rows:3, cols:2, hasHeader:true}.",
+      "description": "Insert a static content table (text cells) — NOT a question; for rating grids respondents answer, use editor_insertMatrixQuestion. `rows` and `cols` are numbers, never strings. Example: {rows:2, cols:2, hasHeader:true, cells:[[\"Item\",\"Price\"],[\"Visit\",\"40 EUR\"]]}.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -3765,6 +4321,16 @@
           "hasHeader": {
             "description": "Whether first row is a header",
             "type": "boolean"
+          },
+          "cells": {
+            "description": "Cell text, rows x cols, row 0 first. Omit for an empty grid.",
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           },
           "after": {
             "description": "NodeId to insert after. Use $prev to chain. Omitting appends to end (usually wrong).",
@@ -4751,7 +5317,7 @@
     {
       "name": "load_skill",
       "title": "Load skill",
-      "description": "Load a domain-knowledge skill — themes, settings, analytics, logic-rules, editing-flows, question-types, etc. Returns markdown reference content. Use when the task touches a domain whose conventions or constraints are not obvious from the surrounding tools. For loading additional MCP tool catalogs (deferred tools by bundle name) use `load_tools` instead.\n\nAvailable skills:\n- toon-format: TOON format reference for reading and parsing form document structure\n- question-types: All question types with parameters, validation, and when to use each\n- logic-rules: Conditional logic conditions, actions, patterns, and examples\n- editing-flows: Editing workflows, node chaining, batch operations, and best practices\n- form-best-practices: Form design best practices for question design, ordering, and type selection.\n- analytics: Form analytics interpretation, metrics, and actionable insights\n- form-settings: Form configuration options, security, notifications, email customization, and data retention\n- form-themes: Form visual theming system — schema, constraints, design guidelines, and examples\n- requests: Requests: asking named people to fill a form — field keys, prefill shapes, delivery, callbacks, polling",
+      "description": "Load a domain-knowledge skill — themes, settings, analytics, logic-rules, editing-flows, question-types, etc. Returns markdown reference content. Use when the task touches a domain whose conventions or constraints are not obvious from the surrounding tools. For loading additional MCP tool catalogs (deferred tools by bundle name) use `load_tools` instead.\n\nAvailable skills:\n- toon-format: TOON format reference for reading and parsing form document structure\n- question-types: All question types with parameters, validation, and when to use each\n- logic-rules: Conditional logic conditions, actions, patterns, and examples\n- editing-flows: Editing workflows, node chaining, batch operations, and best practices\n- form-best-practices: Form design best practices for question design, ordering, and type selection.\n- analytics: Form analytics interpretation, metrics, and actionable insights\n- form-settings: Form configuration options, security, notifications, email customization, and data retention\n- form-themes: Form visual theming system — schema, constraints, design guidelines, and examples\n- requests: Requests: asking named people to fill a form — field keys, prefill shapes, building the form in the same call, delivery, callbacks, polling",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -4783,7 +5349,7 @@
     {
       "name": "load_tools",
       "title": "Load tools",
-      "description": "Load a tool catalog: returns its intro text, usage patterns, and each tool's full JSON input schema as markdown. On surfaces that scope active tools by context this also activates the catalog's tools (elsewhere they are already callable and this just adds the enriched context — workflows, field semantics, constraints — beyond the bare schema). Prefer loading the relevant catalog before using a capability over guessing a tool name or argument shape. For domain knowledge (themes, settings, logic semantics) use `load_skill` instead.\n\nAvailable catalogs:\n- form-data: Aggregate form analytics (views, completions, drop-off). Individual submission rows: formSubmission_list.\n- form-appearance: Visual styling: per-mode themes (light + dark). Cover/logo via form_update.\n- form-behavior: Behavior settings: notification emails, completion redirect, password, retention, language, payment.\n- form-sharing: Share-link CRUD + custom-domain attach/detach. Required after form_publish for respondent URL.\n- form-translations: Multilingual draft → publish workflow for form copy.\n- form-lifecycle: Form lifecycle ops beyond publish: unpublish, restore-from-trash.\n- workspace-management: Workspace inspect + folder CRUD beyond core list verbs.\n- request-lifecycle: Requests: discover field keys, create, read, list, cancel, remind, replay the callback, upload a document.\n- editor-actions: Editor actions beyond getDocument/updateElement/deleteElement: format text, set logic, simulate logic.\n- editor-inserts: Less-common element inserts beyond the core set: time/switch/file/signature/matrix/ranking/payment/schedule-appointment/picture-choice questions, embedded/table/list content, row/repeating-group layout, calculated/hidden fields, logic + variable.",
+      "description": "Load a tool catalog: returns its intro text, usage patterns, and each tool's full JSON input schema as markdown. On surfaces that scope active tools by context this also activates the catalog's tools (elsewhere they are already callable and this just adds the enriched context — workflows, field semantics, constraints — beyond the bare schema). Prefer loading the relevant catalog before using a capability over guessing a tool name or argument shape. For domain knowledge (themes, settings, logic semantics) use `load_skill` instead.\n\nAvailable catalogs:\n- form-data: Aggregate form analytics (views, completions, drop-off). Individual submission rows: formSubmission_list.\n- form-appearance: Visual styling: per-mode themes (light + dark). Cover/logo via form_update.\n- form-behavior: Behavior settings: notification emails, completion redirect, password, retention, language, payment, webhook.\n- form-sharing: Share-link CRUD + custom-domain attach/detach. Required after form_publish for respondent URL.\n- form-translations: Multilingual draft → publish workflow for form copy.\n- form-lifecycle: Form lifecycle ops beyond publish: unpublish, restore-from-trash.\n- workspace-management: Workspace inspect + folder CRUD beyond core list verbs.\n- request-lifecycle: Requests: discover field keys, create (with an existing form or one built in the call), read, list, cancel, remind, replay the callback, upload a document, check Stripe and Cal.com connections.\n- editor-actions: Editor actions beyond getDocument/updateElement/deleteElement: format text, set logic, simulate logic.\n- editor-inserts: Less-common element inserts beyond the core set: time/switch/file/signature/matrix/ranking/payment/schedule-appointment/picture-choice questions, embedded/table/list content, row/repeating-group layout, calculated/hidden fields, logic + variable.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -5014,14 +5580,57 @@
     {
       "name": "request_create",
       "title": "Create request",
-      "description": "Create a request: one assignment of a published form to one named recipient, with its own link, prefilled answers, expiry and optional callback. Use it when you need answers from a specific person and want to know whether they answered; for a link anyone may fill, use formShareLink_create. Call fields_list(formId) first — prefill/context/readonly take field keys. Returns { id, status, url, deliveryStatus, expiresAt, next }. Track with request_get, withdraw with request_cancel. See load_skill(\"requests\").",
+      "description": "Create a request: one assignment of a published form to one named recipient, with its own link, prefilled answers, expiry and optional callback. Use it when you need answers from a specific person and want to know whether they answered; for a link anyone may fill, use formShareLink_create. Call fields_list(formId) first — prefill/context/readonly take field keys. Or pass form to build the form in the same call (keys come from your blocks). Returns { id, status, url, deliveryStatus, expiresAt, form?, next }. Track with request_get, withdraw with request_cancel. See load_skill(\"requests\").",
       "inputSchema": {
         "type": "object",
         "properties": {
           "formId": {
+            "description": "Published form to send. Call fields_list(formId) first for its keys. Or pass form instead.",
             "type": "string",
-            "minLength": 1,
-            "description": "Published form to send. Call fields_list(formId) first for its keys."
+            "minLength": 1
+          },
+          "form": {
+            "description": "Build the form in this call instead of formId. The same form again reuses the first one.",
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Dashboard name, max 100 chars. Same for every recipient: personalise through prefill and context."
+              },
+              "blocks": {
+                "type": "array",
+                "items": {},
+                "description": "1-200 blocks in form order: { type, key?, ...its editor_insert* tool's params }; load_skill(\"requests\") lists types."
+              },
+              "language": {
+                "description": "UI language tag. Default: the baseline's, else \"en\".",
+                "type": "string"
+              },
+              "baseline": {
+                "description": "Form id to copy logo, cover, theme, settings and emails from.",
+                "type": "string"
+              },
+              "settings": {
+                "description": "formSettings_update's settings, fields by key; see load_skill(\"requests\").",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "theme": {
+                "description": "{ light?, dark? }: preset id or whole formTheme_set theme per mode; wins over the baseline's."
+              }
+            },
+            "required": [
+              "name",
+              "blocks"
+            ],
+            "additionalProperties": false
+          },
+          "workspaceId": {
+            "description": "Workspace for form. Defaults to the token workspace.",
+            "type": "string"
           },
           "recipient": {
             "description": "Who this is for, e.g. { \"email\": \"ada@acme.com\", \"name\": \"Ada\" }.",
@@ -5084,7 +5693,7 @@
             ]
           },
           "reminders": {
-            "description": "Idle-time offsets, e.g. [\"2d\",\"5d\"] (max 5, units m/h/d). Omit to inherit the form schedule, [] for none. Needs recipient.email (Pro+).",
+            "description": "Idle-time offsets, e.g. [\"2d\",\"5d\"] (max 5, units m/h/d, at least 1h). Omit to inherit the form schedule, [] for none. Needs recipient.email (Pro+).",
             "type": "array",
             "items": {
               "type": "string"
@@ -5135,10 +5744,7 @@
             "description": "Dry run. No invitation or reminder email whatever delivery says; the link still opens and can be completed; the callback fires with \"test\": true; the request is hidden from the Requests page and analytics by default and its submission counts nowhere (no quota, no exports, no integrations).",
             "type": "boolean"
           }
-        },
-        "required": [
-          "formId"
-        ]
+        }
       },
       "annotations": {
         "readOnlyHint": false,
@@ -5433,7 +6039,7 @@
     {
       "uri": "skill://requests",
       "name": "requests",
-      "description": "Requests: asking named people to fill a form — field keys, prefill shapes, delivery, callbacks, polling",
+      "description": "Requests: asking named people to fill a form — field keys, prefill shapes, building the form in the same call, delivery, callbacks, polling",
       "mimeType": "text/markdown"
     },
     {
@@ -5451,7 +6057,7 @@
     {
       "uri": "skill://form-behavior",
       "name": "form-behavior",
-      "description": "Behavior settings: notification emails, completion redirect, password, retention, language, payment.",
+      "description": "Behavior settings: notification emails, completion redirect, password, retention, language, payment, webhook.",
       "mimeType": "text/markdown"
     },
     {
@@ -5481,7 +6087,7 @@
     {
       "uri": "skill://request-lifecycle",
       "name": "request-lifecycle",
-      "description": "Requests: discover field keys, create, read, list, cancel, remind, replay the callback, upload a document.",
+      "description": "Requests: discover field keys, create (with an existing form or one built in the call), read, list, cancel, remind, replay the callback, upload a document, check Stripe and Cal.com connections.",
       "mimeType": "text/markdown"
     },
     {
