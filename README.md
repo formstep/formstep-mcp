@@ -25,7 +25,7 @@ This repository holds documentation, example configs and a Grok Build plugin man
 
 ## What an agent can do
 
-- **Send requests.** Ask one named person for information, with answers filled in or locked, and read what they answered.
+- **Send requests.** Ask one named person for information, with answers filled in or locked, and read what they answered. Use a form you published, or have the agent build the form in the same call.
 - **Build forms.** Create a form and add, edit or remove its questions, pages and logic.
 - **Publish and share.** Publish a form, create share links, translate it, and set its theme and settings.
 - **Read results.** List a form's submissions and read its analytics.
@@ -170,6 +170,14 @@ Send a Formstep request with the "Supplier onboarding" form to Ada Lovelace (ada
 
 The agent reads the form's field keys with `fields_list`, creates the request with `request_create`, and gives you the request link.
 
+No form yet? The agent can build one in the same call:
+
+```text
+Ask Ada Lovelace (ada@acme.example) for her last three payslips and a 40 EUR processing fee, and let her book a 15 minute call. Use our logo at https://acme.example/logo.png and a dark blue cover. Give me the link.
+```
+
+The agent checks the workspace's Stripe and Cal.com connections with `workspaceConnection_list`, then calls `request_create` with a `form` object instead of a `formId`: a name, the blocks, and the logo and cover you gave it. Formstep builds the form, publishes it and creates the request in one step, and returns the field keys the answers will come back under. The same definition again reuses that form, so a hundred requests make one form.
+
 If the form has **Send reminders** on, Formstep still emails the recipient its scheduled reminders. To prevent that, also say _no reminders_.
 
 The agent is not told when the recipient submits, so ask it later:
@@ -180,7 +188,7 @@ Has the Formstep request supplier-2041 been answered? Show me the answers.
 
 The agent finds the request by its external ID with `request_list`, then reads it with `request_get`. Once the request is completed, the answers come back keyed by field key.
 
-Step by step: [Send a request with an AI agent](https://docs.formstep.io/guides/ai-agents/send-a-request/) and [Build a form with an AI agent](https://docs.formstep.io/guides/ai-agents/build-a-form/).
+Step by step: [Send a request with an AI agent](https://docs.formstep.io/guides/ai-agents/send-a-request/), [Create a form and a request in one call](https://docs.formstep.io/requests/inline-forms/) and [Build a form with an AI agent](https://docs.formstep.io/guides/ai-agents/build-a-form/).
 
 ## Tools
 
@@ -190,14 +198,48 @@ Every tool is on `tools/list` with its full input schema as soon as an AI tool c
 
 Ask one named person for information and read the result.
 
-- `fields_list`: list the field keys a request can address on a published form. Call it before `request_create`.
-- `request_create`: assign a published form to one recipient, with prefill, locked fields, context, delivery, expiry and an optional callback.
+- `fields_list`: list the field keys a request can address on a published form. Call it before `request_create` with a `formId`.
+- `request_create`: assign a form to one recipient, with prefill, locked fields, context, delivery, expiry and an optional callback. Pass `formId` for a published form, or `form` to build the form in the same call (see [below](#forms-built-inside-a-request)).
 - `request_get`: read one request by its ID. Returns the status, the timeline and, once completed, the answers keyed by field key.
 - `request_list`: list requests for a form or a workspace, filtered by status, outcome or your own external ID.
 - `request_cancel`: withdraw a pending request.
 - `request_remind`: send the recipient a reminder email now.
 - `request_replayCallback`: send a callback again when it never reached your endpoint.
 - `document_create`: reserve an upload for a file a request hands to its recipient. One upload can serve any number of requests.
+- `workspaceConnection_list`: the Stripe and Cal.com accounts the workspace has connected, and the `connectUrl` to connect a missing one. Read it before building a form with a payment or a booking.
+- `scheduler_listEventTypes`: the Cal.com event types a booking block can name, and whether each one can be booked from a form.
+- `paymentConnection_setDefault`: choose the Stripe account payments charge through by default. Workspace owner only.
+
+### Forms built inside a request
+
+`request_create` takes `form` in place of `formId`. Formstep builds an ordinary form from it, publishes it and creates the request in one step: both exist or neither does. The agent needs no editor tool and no `fields_list` call.
+
+```json
+{
+  "form": {
+    "name": "Documents and fee for your mortgage application",
+    "logo": { "type": "image", "url": "https://acme.example/logo.png" },
+    "cover": { "type": "color", "color": "#0f4c81" },
+    "blocks": [
+      { "type": "paragraph", "content": "Hi {{first_name}}, upload the documents and pay the fee." },
+      { "type": "hiddenField", "key": "first_name" },
+      { "type": "file", "key": "payslips", "title": "Your last three payslips", "maxFiles": 3 },
+      { "type": "payment", "key": "fee", "title": "Processing fee", "amount": 40, "currency": "EUR" },
+      { "type": "scheduleAppointment", "key": "call", "title": "Pick a time", "eventType": "15 min call" }
+    ]
+  },
+  "recipient": { "email": "ada@example.com", "name": "Ada" },
+  "context": { "first_name": "Ada" }
+}
+```
+
+- **`form`** takes `name` and `blocks` (1 to 200, in form order), and optionally `language`, the brand (`logo`, `cover`, `emoji`), `theme` (a preset id per color mode), `settings` and `translations` (every string of the form per extra language). Formstep fetches each image URL once and keeps its own copy; it must be a public JPEG, PNG or WebP.
+- **Blocks** take the parameters of the matching `editor_insert*` tool, without `formId` and `after`, plus a `key`. Every block type is there: questions, documents, payment, scheduleAppointment, decision, content blocks, rows, page dividers, repeating groups, hidden and calculated fields, and logic rules that refer to other blocks by key.
+- **The response** adds `form: { id, name, reused, fields }`, the keys the answers come back under.
+- **One definition, one form.** The same `form` again reuses the published form (`reused: true`). Put the customer's name, invoice number or amount in `prefill` and `context`, never in the name, a block or the brand, or every call makes a new form. The agent keeps the brand and sends it unchanged with every request. Set `key` on every question.
+- **Payments and bookings** need Stripe or Cal.com connected to the workspace. `workspaceConnection_list` says what is connected and returns the `connectUrl` a person opens once; an agent cannot connect an account itself.
+
+The full reference is `load_skill("requests")`, section 2c, and [Create a form and a request in one call](https://docs.formstep.io/requests/inline-forms/).
 
 ### Forms
 
@@ -225,6 +267,7 @@ Each block type has its own insert tool with a precise schema:
 
 - `formShareLink_list`, `formShareLink_create`, `formShareLink_update`: manage share links, also on a custom domain.
 - `formSubmission_list`: list a form's completed submissions, and drafts on request.
+- `formWebhook_list`, `formWebhook_create`, `formWebhook_update`, `formWebhook_delete`, `formWebhook_test`: POST every submission of a form to your endpoint, signed with the webhook's own secret.
 - `formAnalytics_get`: views, submissions, completion rate, and unique visitors by device, country, browser and source.
 
 ### Appearance, settings and translations
@@ -243,13 +286,13 @@ Each block type has its own insert tool with a precise schema:
 Two tools return documentation instead of doing work:
 
 - `load_skill` loads a guide on one topic: `requests`, `question-types`, `logic-rules`, `editing-flows`, `form-best-practices`, `form-themes`, `form-settings`, `analytics` or `toon-format`.
-- `load_tools` loads usage notes for a group of tools, called a catalog: `request-lifecycle`, `editor-inserts`, `editor-actions`, `form-lifecycle`, `form-appearance`, `form-behavior`, `form-sharing`, `form-translations`, `form-data` or `workspace-management`.
+- `load_tools` loads usage notes for a group of tools, called a catalog: `request-lifecycle` (requests, documents and the Stripe and Cal.com connections), `editor-inserts`, `editor-actions`, `form-lifecycle`, `form-appearance`, `form-behavior`, `form-sharing`, `form-translations`, `form-data` or `workspace-management`.
 
 Every guide and catalog is also an MCP resource at `skill://<name>`, such as `skill://requests`. The server also serves four prompts: `identity`, `capabilities`, `data_tools` and `editor_tools`.
 
 ### Tools that ask first
 
-Six tools are marked destructive, because undoing them takes another call or is not possible: `form_delete`, `form_unpublish`, `workspaceFolder_delete`, `editor_deleteElement`, `translationLanguage_delete` and `request_cancel`. Most AI tools ask you before running them. The prompt comes from your AI tool, so check its approval settings if you need a hard stop.
+Seven tools are marked destructive, because undoing them takes another call or is not possible: `form_delete`, `form_unpublish`, `workspaceFolder_delete`, `editor_deleteElement`, `translationLanguage_delete`, `formWebhook_delete` and `request_cancel`. Most AI tools ask you before running them. The prompt comes from your AI tool, so check its approval settings if you need a hard stop.
 
 Two actions cannot be undone:
 
@@ -259,6 +302,7 @@ Two actions cannot be undone:
 ## Limits
 
 - **Rate limit.** 120 tool calls per minute per token, shared with the [REST API](https://docs.formstep.io/developers/rest-api/). Only `tools/call` counts. Over the limit, the call returns a failed tool result with `RATE_LIMITED` and a `retryAfterMs`. `request_create` and `document_create` also share a second limit of 60 calls per minute per token.
+- **New forms per day.** A workspace makes at most 300 new forms through `request_create` with `form` a day. Past that, a call that would make a new form fails with `RATE_LIMITED`, while calls that reuse a form keep working.
 - **Monthly allowance.** Each `request_create` spends one unit of the monthly allowance of the workspace owner's plan, whether or not the recipient ever answers. A test request (`test: true`) spends nothing. When the allowance is spent, `request_create` fails with `MONTHLY_ALLOWANCE_REACHED`.
 - **Paid plans.** Emailing a recipient (the invitation and reminders) and `formAnalytics_get` need the Pro or Business plan. See [plans and pricing](https://docs.formstep.io/subscription-billing/plans-pricing/).
 - **No notification when a recipient submits.** The server never calls your agent. Ask again later, or pass a `callbackUrl` to `request_create` so Formstep calls your endpoint ([callbacks](https://docs.formstep.io/requests/callbacks/)).
@@ -285,6 +329,7 @@ For anyone who writes their own MCP client or debugs a connection.
 - [Build a form with an AI agent](https://docs.formstep.io/guides/ai-agents/build-a-form/)
 - [Send a request with an AI agent](https://docs.formstep.io/guides/ai-agents/send-a-request/)
 - [Requests overview](https://docs.formstep.io/requests/overview/), [field keys](https://docs.formstep.io/requests/field-keys/), and [callbacks](https://docs.formstep.io/requests/callbacks/)
+- [Create a form and a request in one call](https://docs.formstep.io/requests/inline-forms/)
 - [API tokens](https://docs.formstep.io/developers/api-tokens/) and the [REST API](https://docs.formstep.io/developers/rest-api/)
 - [Privacy policy](https://docs.formstep.io/legal/privacy-policy/) and [terms of service](https://docs.formstep.io/legal/terms-of-service/)
 
